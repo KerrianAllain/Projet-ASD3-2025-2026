@@ -1,0 +1,13 @@
+{
+    "editor.tabSize": 4,
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "symbols.files.associations": {
+        "justfile": "shell",
+    },
+    "symbols.folders.associations": {
+        "bin": "folder-gray-code"
+    },
+}
