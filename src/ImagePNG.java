@@ -6,155 +6,140 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
-public class ImagePNG {
-    private final BufferedImage image; // The bitmap
+public class ImagePNG
+{
+    private BufferedImage img; // the bitmap
 
-    /**
-     * Default constructor.
-     *
-     * @param filename The image file to load.
-     * @throws IOException Signals that an I/O exception of some sort has occurred.
-     *                     This class is the general class of exceptions produced by
-     *                     failed or interrupted I/O operations.
-     */
+    // Default constructor: load image from file
     public ImagePNG(String filename) throws IOException {
-        File file = new File(filename);
-        this.image = ImageIO.read(file);
+        File fic = new File(filename);
+        img = ImageIO.read(fic);
     }
 
-    /**
-     * Copy constructor.
-     *
-     * @param png The ImagePNG to copy.
-     */
+    // Copy constructor
     public ImagePNG(ImagePNG png) {
-        ColorModel cm = png.image.getColorModel();
+        ColorModel cm = png.img.getColorModel();
         boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
-        WritableRaster raster = png.image.copyData(null);
-        this.image = new BufferedImage(cm, raster, isAlphaPremultiplied, null);
+        WritableRaster raster = png.img.copyData(null);
+        img = new BufferedImage(cm, raster, isAlphaPremultiplied, null);
     }
 
-    /**
-     * Clone method.
-     *
-     * @return The cloned image.
-     */
-    @Override
-    public ImagePNG clone() throws CloneNotSupportedException {
-        try {
-            return (ImagePNG) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+    // Clone method
+    public ImagePNG clone() {
+        return new ImagePNG(this);
     }
 
-    /**
-     * Save an ImagePNG to a file.
-     *
-     * @param filename The file's name to save to.
-     * @throws IOException Signals that an I/O exception of some sort has occurred.
-     *                     This class is the general class of exceptions produced by
-     *                     failed or interrupted I/O operations.
-     */
+    // Saving the png image to a file
     public void save(String filename) throws IOException {
-        File file = new File(filename);
-        ImageIO.write(image, "png", file);
+        File fic = new File(filename);
+        ImageIO.write(img,"png",fic);
     }
 
-    /**
-     * Get the number of pixels in X dimension.
-     *
-     * @return The width of the image.
-     */
+    // Number of pixels in X dimension
     public int width() {
-        return image.getWidth();
+        return img.getWidth();
     }
 
-    /**
-     * Get the number of pixels in Y dimension.
-     *
-     * @return The height of the image.
-     */
+    // Number of pixels in Y dimension
     public int height() {
-        return image.getHeight();
+        return img.getHeight();
     }
 
-    /**
-     * Get the Color of the matching Pixel coordinates.
-     *
-     * @param x The coordinate in X dimension.
-     * @param y The coordinate in Y dimension.
-     * @return The Color associated to the coordinates.
-     */
+    // Pixel color getter
     public Color getPixel(int x, int y) {
-        return new Color(image.getRGB(x, y));
+        return new Color(img.getRGB(x,y));
     }
 
-    /**
-     * Set the Color of the matching Pixel coordinates.
-     *
-     * @param x     The coordinate in X dimension.
-     * @param y     The coordinate in Y dimension.
-     * @param color The Color to assign to the coordinates.
-     */
-    public void setPixel(int x, int y, Color color) {
-        image.setRGB(x, y, color.getRGB());
+    // Pixel color setter
+    public void setPixel(int x, int y, Color col) {
+        img.setRGB(x,y,col.getRGB());
     }
 
-    /**
-     * Static function to convert a color to an hexadecimal code.
-     *
-     * @param color The color to convert.
-     * @return The hexadecimal code value of the color.
-     */
-    public static String colorToHex(Color color) {
-        return Integer.toHexString(color.getRGB()).substring(2);
+    // Function (static) that converts a color to an hexadecimal code
+    public static String colorToHex(Color col) {
+        return Integer.toHexString(col.getRGB()).substring(2);
     }
 
-    /**
-     * Static function to convert an hexadecimal code to a color.
-     *
-     * @param hex The hexadecimal code to convert.
-     * @return The Color of the hexadecimal code value.
-     */
     public static Color hexToColor(String hex) {
-        return new Color(Integer.parseUnsignedInt(hex, 16));
+        return new Color(Integer.parseUnsignedInt(hex,16));
     }
 
-    /**
-     * Static function to compute the EQM index between a reference and its copy.
-     *
-     * @param reference The ImagePNG reference.
-     * @param copy      The ImagePNG copy.
-     * @return The computed index.
-     *
-     * @implNote https://fr.wikipedia.org/wiki/Peak_Signal_to_Noise_Ratio
-     */
-    public static double computeEQM(ImagePNG reference, ImagePNG copy) {
-        double height = reference.height();
-        double width = reference.width();
-        double eqm = 0;
-
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                Color referenceColor = reference.getPixel(x, y);
-                double referenceGreen = referenceColor.getGreen() / 255.0;
-                double referenceBlue = referenceColor.getBlue() / 255.0;
-                double referenceRed = referenceColor.getRed() / 255.0;
-
-                Color copyColor = copy.getPixel(x, y);
-                double copyRed = copyColor.getRed() / 255.0;
-                double copyBlue = copyColor.getBlue() / 255.0;
-                double copyGreen = copyColor.getGreen() / 255.0;
-
-                double computation = Math.pow(referenceRed - copyRed, 2)
-                        + Math.pow(referenceGreen - copyGreen, 2)
-                        + Math.pow(referenceBlue - copyBlue, 2);
-                eqm += computation / (3 * height * width);
+    // Function (static) that computes a similarity index between images ref and cpy
+    // based on the mean squared error measure (see https://fr.wikipedia.org/wiki/Peak_Signal_to_Noise_Ratio)
+    public static double computeEQM(ImagePNG ref, ImagePNG cpy) {
+        double w = ref.width(), h = ref.height(),  eqm = 0;
+        for( int x = 0 ; x < w ; x++ ) {
+            for( int y = 0 ; y < h ; y++ ) {
+                // Pixel (x,y) retrieval
+                Color Cref = ref.getPixel(x,y), Ccpy = cpy.getPixel(x,y);
+                // Components normalization
+                double Rref = Cref.getRed()/255.0, Gref = Cref.getGreen()/255.0, Bref = Cref.getBlue()/255.0;
+                double Rcpy = Ccpy.getRed()/255.0, Gcpy = Ccpy.getGreen()/255.0, Bcpy = Ccpy.getBlue()/255.0;
+                // squared error contribution
+                eqm += ((Rref-Rcpy)*(Rref-Rcpy) + (Gref-Gcpy)*(Gref-Gcpy) + (Bref-Bcpy)*(Bref-Bcpy))/(3*h*w);
             }
         }
+        return Math.ceil(10000*(1-eqm))/100.0; // percentage rounded to the hundredth
+    }
 
-        // Round the percentage to the hundredth
-        return Math.ceil(10000 * (1 - eqm)) / 100.0;
+    /**************** À RETIRER DANS VOTRE PROJET *********************/
+    /** Code de démonstration de l'usage de cette classe **/
+    public static void main( String[] args )
+    {
+        try {
+            if (args.length!=1) throw new IllegalArgumentException("Préciser le nom (et chemin) d'un unique fichier png en paramètre");
+
+            ImagePNG png = new ImagePNG(args[0]);
+            ImagePNG pngNB = new ImagePNG(png); // une copie
+            ImagePNG pngR = new ImagePNG(png); // une autre copie
+
+            // 1. MODIFICATION DES COULEURS
+
+            Color col,nb,red;
+            int r,g,b,l;
+            for (int x=0 ; x<png.width(); x++)
+            {
+                for (int y=0 ; y<png.height() ; y++)
+                {
+                    // extraction de la couleur du pixel (x,y)
+                    col = png.getPixel(x,y);
+                    // modification de la couleur
+                    r = col.getRed();
+                    g = col.getGreen();
+                    b = col.getBlue();
+                    l = (r+g+b)/3;
+                    nb = new Color(l,l,l);
+                    red = new Color(l,0,0);
+                    // inscription de la nouvelle couleur des pixels (x,y)
+                    pngNB.setPixel(x,y,nb);
+                    pngR.setPixel(x,y,red);
+                }
+            }
+            png.save(args[0]);
+            pngNB.save(args[0]+"NB");
+            pngR.save(args[0]+"R");
+
+            // 2. COMPARAISON DES RÉSULTATS
+
+            // calcul des indices de similarité
+            double siNB = ImagePNG.computeEQM(png,pngNB);
+            double siR = ImagePNG.computeEQM(png,pngR);
+
+            // chargement des fichiers
+            File fic = new File(args[0]);
+            File ficNB =  new File(args[0]+"NB");
+            File ficR =  new File(args[0]+"NB");
+
+            // rapport des tailles
+            double wNB = Math.ceil(10000.0*ficNB.length() / fic.length())/100.0;
+            double wR = Math.ceil(10000.0*ficR.length() / fic.length())/100.0;
+
+            // affichage des critères
+            System.out.println("NB: taille="+wNB+"% / qualité="+siNB+"%");
+            System.out.println("R: taille="+wR+"% / qualité="+siR+"%");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
