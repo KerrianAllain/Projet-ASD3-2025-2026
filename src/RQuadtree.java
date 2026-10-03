@@ -3,45 +3,47 @@ import java.awt.Color;
 
 public class RQuadtree {
     private final Point bottomRight;
-    private final ImagePNG image;
     private final Point topLeft;
+
     private RQuadtree NO;
     private RQuadtree NE;
     private RQuadtree SE;
     private RQuadtree SO;
+
     private Node node;
 
     /**
-     * Default public constructor building the RQuadtree from a given ImagePNG.
+     * Builds an RQuadtree from the given ImagePNG.
      *
-     * @param image The ImagePNG to use to build the RQuadtree.
+     * @param image The ImagePNG to build the RQuadtree from.
      */
     public RQuadtree(ImagePNG image) {
         this(image, new Point(0, 0), new Point(image.width(), image.height()));
     }
 
     /**
-     * Private constructor to define the image,
-     * and the coordinates of the current quadrant.
+     * Builds a quadrant of the image.
      *
-     * @param image            The ImagePNG to build from.
+     * @param image            The ImagePNG to build the RQuadtree from.
      * @param topLeftPoint     Top-left coordinates (inclusive).
      * @param bottomRightPoint Bottom-right coordinates (exclusive).
      */
     private RQuadtree(ImagePNG image, Point topLeftPoint, Point bottomRightPoint) {
         this.bottomRight = bottomRightPoint;
         this.topLeft = topLeftPoint;
-        this.image = image;
+
+        // TODO
         this.node = null;
         this.NO = null;
         this.NE = null;
         this.SE = null;
         this.SO = null;
+        // TODO
 
-        this.buildFromImage();
+        this.buildFromImage(image);
     }
 
-    private void buildFromImage() {
+    private void buildFromImage(ImagePNG image) {
         // Quick access to quadrant coordinates.
         int bRx = this.bottomRight.x, bRy = this.bottomRight.y;
         int tLx = this.topLeft.x, tLy = this.topLeft.y;
@@ -53,30 +55,124 @@ public class RQuadtree {
             return;
 
         // The current quadrant is equivalent to a pixel size (1x1).
-        if (this.isQuadrantHomogeneous()) {
-            this.node = new Node(new Point(tLx, tLy), this.image.getPixel(tLx, tLy));
+        if (this.isQuadrantHomogeneous(image)) {
+            this.node = new Node(new Point(tLx, tLy), image.getPixel(tLx, tLy));
             return;
         }
 
         // Divide the current quadrant into four sub-quadrants (NO, NE, SE, SO).
         Point middle = new Point(tLx + quadrantWidth / 2, tLy + quadrantHeight / 2);
-        this.NO = new RQuadtree(this.image, new Point(tLx, tLy), new Point(middle.x, middle.y));
-        this.NE = new RQuadtree(this.image, new Point(middle.x, tLy), new Point(bRx, middle.y));
-        this.SO = new RQuadtree(this.image, new Point(tLx, middle.y), new Point(middle.x, bRy));
-        this.SE = new RQuadtree(this.image, new Point(middle.x, middle.y), new Point(bRx, bRy));
+        this.NO = new RQuadtree(image, this.topLeft, middle);
+        this.NE = new RQuadtree(image, new Point(middle.x, tLy), new Point(bRx, middle.y));
+        this.SO = new RQuadtree(image, new Point(tLx, middle.y), new Point(middle.x, bRy));
+        this.SE = new RQuadtree(image, middle, this.bottomRight);
     }
 
-    private boolean isQuadrantHomogeneous() {
-        // First color of the quadrant to check with.
-        Color firstColor = this.image.getPixel(this.topLeft.x, this.topLeft.y);
+    private boolean isQuadrantHomogeneous(ImagePNG image) {
+        // Reference color of the quadrant to check with.
+        Color reference = image.getPixel(this.topLeft.x, this.topLeft.y);
         for (int x = this.topLeft.x; x < this.bottomRight.x; x++) {
             for (int y = this.topLeft.y; y < this.bottomRight.y; y++) {
-                // The current color is different from the first color seen.
-                if (!firstColor.equals(this.image.getPixel(x, y)))
+                // The current color is different from the reference.
+                if (!reference.equals(image.getPixel(x, y)))
                     return false;
             }
         }
         return true;
+    }
+
+    /**
+     * @return The four children of the node in clockwise order.
+     */
+    private RQuadtree[] getChildren() {
+        return new RQuadtree[] { this.NO, this.NE, this.SE, this.SO };
+    }
+
+    /**
+     * Recursively compress the tree according to the given luminance threshold.
+     *
+     * @param lambda Maximal luminance loss authorized.
+     * @throws IllegalArgumentException If lambda is outside the range [0, 255].
+     */
+    public void compressLambda(int lambda) {
+        if (lambda < 0 || lambda > 255)
+            throw new IllegalArgumentException("Lambda value must be between 0 and 255.");
+
+        // An overleaf can be compressed.
+        if (this.isOverLeaf()) {
+            Color averageColor = this.averageColor();
+
+            // The luminance threshold is respected.
+            if (this.luminance(averageColor) <= lambda) {
+                this.processCompression(averageColor);
+                return;
+            }
+        }
+
+        // Compress each existing child.
+        for (RQuadtree child : this.getChildren())
+            if (child != null)
+                child.compressLambda(lambda);
+    }
+
+    /**
+     * @return true if all four children exist and are leaves.
+     */
+    private boolean isOverLeaf() {
+        for (RQuadtree child : this.getChildren())
+            if (child == null || !child.isLeaf())
+                return false;
+        return true;
+    }
+
+    /**
+     * @return true if this node has no children.
+     */
+    private boolean isLeaf() {
+        for (RQuadtree child : this.getChildren())
+            if (child != null)
+                return false;
+        return true;
+    }
+
+    /**
+     * @return The average color of the quadrant.
+     */
+    private Color averageColor() {
+        int sumRed = 0, sumGreen = 0, sumBlue = 0;
+        for (RQuadtree child : this.getChildren()) {
+            Color color = child.node.color;
+            sumGreen += color.getGreen();
+            sumBlue += color.getBlue();
+            sumRed += color.getRed();
+        }
+
+        int childCount = this.getChildren().length;
+        return new Color(sumRed / childCount, sumGreen / childCount, sumBlue / childCount);
+    }
+
+    /**
+     * Compute the luminance function to a given color.
+     *
+     * @param color The color to compute the luminance from.
+     * @return The luminance value.
+     */
+    private double luminance(Color color) {
+        return 0.2126 * color.getRed() + 0.7152 * color.getGreen() + 0.0722 * color.getBlue();
+    }
+
+    /**
+     * Prune the quadrant by removing its leaves and editing the node
+     * color to the average one previously computed.
+     *
+     * @param color The color to assign to the quadrant.
+     */
+    private void processCompression(Color color) {
+        this.node = new Node(new Point(this.NO.topLeft.x, this.SE.bottomRight.y), color);
+        this.NO = null;
+        this.NE = null;
+        this.SE = null;
+        this.SO = null;
     }
 
     @Override
