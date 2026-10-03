@@ -37,9 +37,10 @@ public class AVL implements Cloneable {
     /**
      * Iterate over a RQuadtree to add all of its colors Only called by the
      * constructor
+     *
      * @param quadtree an RQuadtree
      */
-    public void buildQuadTree(RQuadtree quadtree) {
+    private void buildQuadTree(RQuadtree quadtree) {
         if (quadtree.isLeaf()) {
             this.add(quadtree.getColor());
         } else {
@@ -158,11 +159,11 @@ public class AVL implements Cloneable {
      *
      * @param color a Color Object color must not already be in the AVL
      */
-    public void add(Color color) {
+    protected void add(Color color) {
         if (this.root == null) {
             this.root = color;
         } else {
-        this.addHeightVar(color);
+            this.addHeightVar(color);
         }
     }
 
@@ -172,7 +173,7 @@ public class AVL implements Cloneable {
      * @param color an Color Object
      * @return int the difference of heigth of the AVL
      */
-    public int addHeightVar(Color color) {
+    private int addHeightVar(Color color) {
         int h;
         if (lowerThan(color, this.root)) {
             if (this.L != null) {
@@ -203,7 +204,7 @@ public class AVL implements Cloneable {
     /**
      * Balance the AVL depending on this.bal
      */
-    public void balance() {
+    private void balance() {
         if (this.bal == 2) {
             if (this.R.bal >= 0) {
                 this.ROTL();
@@ -224,7 +225,7 @@ public class AVL implements Cloneable {
     /**
      * Make a rotation to the left to rebalance
      */
-    public void ROTL() {
+    private void ROTL() {
         AVL B = this.R.clone();
         int a = this.bal;
         int b = B.bal;
@@ -242,7 +243,7 @@ public class AVL implements Cloneable {
     /**
      * Make a rotation to the right to rebalance
      */
-    public void ROTR() {
+    private void ROTR() {
         AVL B = this.L.clone();
         int a = this.bal;
         int b = B.bal;
@@ -263,7 +264,7 @@ public class AVL implements Cloneable {
      * @param hex a String object containing the hexadecimal code of the color
      */
     public void remove(String hex) {
-        this.remove(ImagePNG.hexToColor(hex));
+        this.removeHeightVar(ImagePNG.hexToColor(hex));
     }
 
     /**
@@ -271,21 +272,21 @@ public class AVL implements Cloneable {
      *
      * @param color a Color Object color must be in the AVL
      */
-    public int remove(Color color) {
+    private int removeHeightVar(Color color) {
         int h;
         if (lowerThan(color, this.root)) {
             if (this.L.isLeaf()) {
                 this.L = null;
                 h = (this.R == null) ? +1 : 0;
             } else {
-                h = this.L.remove(color);
+                h = this.L.removeHeightVar(color);
             }
         } else if (greaterThan(color, this.root)) {
             if (this.R.isLeaf()) {
                 this.R = null;
                 h = (this.L == null) ? -1 : 0;
             } else {
-                h = -this.R.remove(color);
+                h = -this.R.removeHeightVar(color);
             }
         } else {
             if (this.L == null && this.R != null) {
@@ -388,7 +389,7 @@ public class AVL implements Cloneable {
      *
      * @return a Color Object
      */
-    public Color max() {
+    private Color max() {
         return (this.R == null) ? this.root : this.R.max();
     }
 
