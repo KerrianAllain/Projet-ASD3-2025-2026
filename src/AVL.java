@@ -120,7 +120,7 @@ public class AVL implements Cloneable {
      * @param color a Color Object color must not already be in the AVL
      */
     public void add(Color color) {
-        this.add_height(color);
+        this.addHeightVar(color);
     }
 
     /**
@@ -129,18 +129,18 @@ public class AVL implements Cloneable {
      * @param color an Color Object
      * @return int the difference of heigth of the AVL
      */
-    public int add_height(Color color) {
+    public int addHeightVar(Color color) {
         int h;
         if (lowerThan(color, this.root)) {
             if (this.L != null) {
-                h = -this.L.add_height(color);
+                h = -this.L.addHeightVar(color);
             } else {
                 this.L = new AVL(color);
                 h = -1;
             }
         } else {
             if (this.R != null) {
-                h = this.R.add_height(color);
+                h = this.R.addHeightVar(color);
             } else {
                 this.R = new AVL(color);
                 h = 1;
@@ -156,7 +156,7 @@ public class AVL implements Cloneable {
     }
 
     /**
-     * Balance the AVL depending on tihs.bal
+     * Balance the AVL depending on this.bal
      */
     public void balance() {
         if (this.bal == 2) {
@@ -204,8 +204,8 @@ public class AVL implements Cloneable {
         this.L = B.R;
         AVL nvThis = this.clone();
         B.R = nvThis;
-        this.bal = a - Math.max(b, 0) + 1;
-        B.bal = Math.min(Math.min(a + 2, a + b + 2), b + 1);
+        nvThis.bal = a - Math.min(b, 0) + 1;
+        B.bal = Math.max(Math.max(a + 2, a + b + 2), b + 1);
         this.root = B.root;
         bal = B.bal;
         this.L = B.L;
