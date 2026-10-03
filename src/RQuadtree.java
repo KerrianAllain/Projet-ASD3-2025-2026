@@ -10,7 +10,7 @@ public class RQuadtree {
     private RQuadtree SE;
     private RQuadtree SO;
 
-    private Node node;
+    private Color color;
 
     /**
      * Builds an RQuadtree from the given ImagePNG.
@@ -31,15 +31,6 @@ public class RQuadtree {
     private RQuadtree(ImagePNG image, Point topLeftPoint, Point bottomRightPoint) {
         this.bottomRight = bottomRightPoint;
         this.topLeft = topLeftPoint;
-
-        // TODO
-        this.node = null;
-        this.NO = null;
-        this.NE = null;
-        this.SE = null;
-        this.SO = null;
-        // TODO
-
         this.buildFromImage(image);
     }
 
@@ -56,7 +47,7 @@ public class RQuadtree {
 
         // The current quadrant is equivalent to a pixel size (1x1).
         if (this.isQuadrantHomogeneous(image)) {
-            this.node = new Node(new Point(tLx, tLy), image.getPixel(tLx, tLy));
+            this.color = image.getPixel(tLx, tLy);
             return;
         }
 
@@ -84,7 +75,7 @@ public class RQuadtree {
     /**
      * @return The four children of the node in clockwise order.
      */
-    private RQuadtree[] getChildren() {
+    protected RQuadtree[] getChildren() {
         return new RQuadtree[] { this.NO, this.NE, this.SE, this.SO };
     }
 
@@ -128,7 +119,7 @@ public class RQuadtree {
     /**
      * @return true if this node has no children.
      */
-    private boolean isLeaf() {
+    protected boolean isLeaf() {
         for (RQuadtree child : this.getChildren())
             if (child != null)
                 return false;
@@ -141,10 +132,9 @@ public class RQuadtree {
     private Color averageColor() {
         int sumRed = 0, sumGreen = 0, sumBlue = 0;
         for (RQuadtree child : this.getChildren()) {
-            Color color = child.node.color;
-            sumGreen += color.getGreen();
-            sumBlue += color.getBlue();
-            sumRed += color.getRed();
+            sumGreen += child.color.getGreen();
+            sumBlue += child.color.getBlue();
+            sumRed += child.color.getRed();
         }
 
         int childCount = this.getChildren().length;
@@ -168,7 +158,7 @@ public class RQuadtree {
      * @param color The color to assign to the quadrant.
      */
     private void processCompression(Color color) {
-        this.node = new Node(new Point(this.NO.topLeft.x, this.SE.bottomRight.y), color);
+        this.color = color;
         this.NO = null;
         this.NE = null;
         this.SE = null;
@@ -183,8 +173,8 @@ public class RQuadtree {
     }
 
     private void buildPath(StringBuilder builder) {
-        if (this.node != null) {
-            builder.append(ImagePNG.colorToHex(this.node.color));
+        if (this.color != null) {
+            builder.append(ImagePNG.colorToHex(this.color));
             return;
         }
 
@@ -202,5 +192,9 @@ public class RQuadtree {
         builder.append(" ");
         this.SO.buildPath(builder);
         builder.append(")");
+    }
+
+    protected Color getColor() {
+        return color;
     }
 }
