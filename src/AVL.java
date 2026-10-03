@@ -1,11 +1,18 @@
+
 import java.awt.Color;
 
 public class AVL implements Cloneable {
+
     private Color root;
     private int bal;
     private AVL L;
     private AVL R;
 
+    /**
+     * Create an AVL using a builder for an image
+     *
+     * @param img an ImagePNG object
+     */
     public AVL(ImagePNG img) {
         this.root = img.getPixel(0, 0);
         this.bal = 0;
@@ -14,18 +21,29 @@ public class AVL implements Cloneable {
         this.build(img);
     }
 
+    /**
+     * Create a clone object from this
+     *
+     * @return an AVL object
+     */
     @Override
     public AVL clone() {
-        try {
-            return (AVL) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError(e);
-        }
+        AVL nv = new AVL(this.root);
+        nv.bal = this.bal;
+        nv.L = this.L;
+        nv.R = this.R;
+        return nv;
     }
 
+    /**
+     * Iterate over an image to add all of its colors Only called by the
+     * constructor
+     *
+     * @param img an ImagePNG object
+     */
     private void build(ImagePNG img) {
         for (int x = 0; x < img.width(); x++) {
-            for (int y= 0; y < img.height(); y++) {
+            for (int y = 0; y < img.height(); y++) {
                 if (this.search(img.getPixel(x, y)) == null) {
                     this.add(img.getPixel(x, y));
                 }
@@ -33,6 +51,11 @@ public class AVL implements Cloneable {
         }
     }
 
+    /**
+     * Create a new AVL with a value as root
+     *
+     * @param c a Color object
+     */
     private AVL(Color c) {
         this.root = c;
         this.bal = 0;
@@ -40,33 +63,77 @@ public class AVL implements Cloneable {
         this.R = null;
     }
 
+    /**
+     * Return true if c1 < c2
+     *
+     * @param c1 a Color Object
+     * @param c2 a Color Object
+     * @return boolean
+     */
     public boolean lowerThan(Color c1, Color c2) {
-        if (c1.getRed() < c2.getRed()) return true;
-        if (c1.getRed() == c2.getRed() && c1.getGreen() < c2.getGreen()) return true;
-        if (c1.getRed() == c2.getRed() && c1.getGreen() == c2.getGreen() && c1.getBlue() < c2.getBlue()) return true;
+        if (c1.getRed() < c2.getRed()) {
+            return true;
+        }
+        if (c1.getRed() == c2.getRed() && c1.getGreen() < c2.getGreen()) {
+            return true;
+        }
+        if (c1.getRed() == c2.getRed() && c1.getGreen() == c2.getGreen() && c1.getBlue() < c2.getBlue()) {
+            return true;
+        }
         return false;
     }
 
+    /**
+     * Return true if c1 > c2
+     *
+     * @param c1 a Color Object
+     * @param c2 a Color Object
+     * @return boolean
+     */
     public boolean greaterThan(Color c1, Color c2) {
-        if (c1.getRed() > c2.getRed()) return true;
-        if (c1.getRed() == c2.getRed() && c1.getGreen() > c2.getGreen()) return true;
-        if (c1.getRed() == c2.getRed() && c1.getGreen() == c2.getGreen() && c1.getBlue() > c2.getBlue()) return true;
+        if (c1.getRed() > c2.getRed()) {
+            return true;
+        }
+        if (c1.getRed() == c2.getRed() && c1.getGreen() > c2.getGreen()) {
+            return true;
+        }
+        if (c1.getRed() == c2.getRed() && c1.getGreen() == c2.getGreen() && c1.getBlue() > c2.getBlue()) {
+            return true;
+        }
         return false;
     }
 
+    /**
+     * Return true if c1 == c2
+     *
+     * @param c1 a Color Object
+     * @param c2 a Color Object
+     * @return boolean
+     */
     public boolean equals(Color c1, Color c2) {
         return c1.getRed() == c2.getRed() && c1.getGreen() == c2.getGreen() && c1.getBlue() == c2.getBlue();
     }
 
+    /**
+     * Add a color to the AVL
+     *
+     * @param color a Color Object color must not already be in the AVL
+     */
     public void add(Color color) {
-        int _ = this.add_height(color);
+        this.add_height(color);
     }
 
+    /**
+     * Add a color to the AVL by recursive calls
+     *
+     * @param color an Color Object
+     * @return int the difference of heigth of the AVL
+     */
     public int add_height(Color color) {
         int h;
         if (lowerThan(color, this.root)) {
             if (this.L != null) {
-                h = - this.L.add_height(color);
+                h = -this.L.add_height(color);
             } else {
                 this.L = new AVL(color);
                 h = -1;
@@ -79,14 +146,18 @@ public class AVL implements Cloneable {
                 h = 1;
             }
         }
-        if (h == 0) return 0;
-        else {
+        if (h == 0) {
+            return 0;
+        } else {
             this.bal += h;
             this.balance();
             return (this.bal == 0) ? 0 : 1;
         }
     }
 
+    /**
+     * Balance the AVL depending on tihs.bal
+     */
     public void balance() {
         if (this.bal == 2) {
             if (this.R.bal >= 0) {
@@ -105,6 +176,9 @@ public class AVL implements Cloneable {
         }
     }
 
+    /**
+     * Make a rotation to the left to rebalance
+     */
     public void ROTL() {
         AVL B = this.R.clone();
         int a = this.bal;
@@ -120,6 +194,9 @@ public class AVL implements Cloneable {
         this.R = B.R;
     }
 
+    /**
+     * Make a rotation to the right to rebalance
+     */
     public void ROTR() {
         AVL B = this.L.clone();
         int a = this.bal;
@@ -135,6 +212,11 @@ public class AVL implements Cloneable {
         this.R = B.R;
     }
 
+    /**
+     * Remove an color
+     *
+     * @param color a Color Object color must be in the AVL
+     */
     public void remove(Color color) {
         if (lowerThan(this.root, color)) {
             this.L.remove(color);
@@ -159,6 +241,13 @@ public class AVL implements Cloneable {
         }
     }
 
+    /**
+     * Return the AVL having color as root or null if the AVL does not have a
+     * color as node value
+     *
+     * @param color a Color Object
+     * @return an AVL
+     */
     public AVL search(Color color) {
         if (equals(this.root, color)) {
             return this;
@@ -177,6 +266,11 @@ public class AVL implements Cloneable {
         }
     }
 
+    /**
+     * Return the max node value from the AVL
+     *
+     * @return a Color Object
+     */
     public Color max() {
         return (this.R == null) ? this.root : this.R.max();
     }
