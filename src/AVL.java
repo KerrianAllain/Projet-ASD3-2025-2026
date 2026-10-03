@@ -18,7 +18,38 @@ public class AVL implements Cloneable {
         this.bal = 0;
         this.L = null;
         this.R = null;
-        this.build(img);
+        this.builImg(img);
+    }
+
+    /**
+     * Create an AVL using a builder for a RQuadtree
+     *
+     * @param quadtree an RQuadtree Object
+     */
+    public AVL(RQuadtree quadtree) {
+        this.root = null;
+        this.bal = 0;
+        this.L = null;
+        this.R = null;
+        this.buildQuadTree(quadtree);
+    }
+
+    /**
+     * Iterate over a RQuadtree to add all of its colors Only called by the
+     * constructor
+     * @param quadtree an RQuadtree
+     */
+    public void buildQuadTree(RQuadtree quadtree) {
+        if (quadtree.isLeaf()) {
+            this.add(quadtree.getColor());
+        } else {
+            RQuadtree[] children = quadtree.getChildren();
+            for (RQuadtree child : children) {
+                if (child != null) {
+                    this.buildQuadTree(child);
+                }
+            }
+        }
     }
 
     /**
@@ -41,7 +72,7 @@ public class AVL implements Cloneable {
      *
      * @param img an ImagePNG object
      */
-    private void build(ImagePNG img) {
+    private void builImg(ImagePNG img) {
         for (int x = 0; x < img.width(); x++) {
             for (int y = 0; y < img.height(); y++) {
                 this.add(img.getPixel(x, y));
@@ -128,7 +159,11 @@ public class AVL implements Cloneable {
      * @param color a Color Object color must not already be in the AVL
      */
     public void add(Color color) {
+        if (this.root == null) {
+            this.root = color;
+        } else {
         this.addHeightVar(color);
+        }
     }
 
     /**
