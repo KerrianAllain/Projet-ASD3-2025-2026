@@ -44,9 +44,7 @@ public class AVL implements Cloneable {
     private void build(ImagePNG img) {
         for (int x = 0; x < img.width(); x++) {
             for (int y = 0; y < img.height(); y++) {
-                if (this.search(img.getPixel(x, y)) == null) {
-                    this.add(img.getPixel(x, y));
-                }
+                this.add(img.getPixel(x, y));
             }
         }
     }
@@ -117,6 +115,16 @@ public class AVL implements Cloneable {
     /**
      * Add a color to the AVL
      *
+     * @param hex a String object containing the hexadecimal code of the color
+     * to add
+     */
+    public void add(String hex) {
+        this.addHeightVar(ImagePNG.hexToColor(hex));
+    }
+
+    /**
+     * Add a color to the AVL
+     *
      * @param color a Color Object color must not already be in the AVL
      */
     public void add(Color color) {
@@ -138,13 +146,15 @@ public class AVL implements Cloneable {
                 this.L = new AVL(color);
                 h = -1;
             }
-        } else {
+        } else if (greaterThan(color, this.root)) {
             if (this.R != null) {
                 h = this.R.addHeightVar(color);
             } else {
                 this.R = new AVL(color);
                 h = 1;
             }
+        } else {
+            return 0;
         }
         if (h == 0) {
             return 0;
@@ -213,32 +223,104 @@ public class AVL implements Cloneable {
     }
 
     /**
-     * Remove an color
+     * Remove a color
+     *
+     * @param hex a String object containing the hexadecimal code of the color
+     */
+    public void remove(String hex) {
+        this.remove(ImagePNG.hexToColor(hex));
+    }
+
+    /**
+     * Remove a color
      *
      * @param color a Color Object color must be in the AVL
      */
-    public void remove(Color color) {
-        if (lowerThan(this.root, color)) {
-            this.L.remove(color);
-        } else if (greaterThan(this.root, color)) {
-            this.R.remove(color);
-        } else {
-            if (this.L == null) {
-                AVL tmp = this.R;
-                this.root = tmp.root;
-                this.L = tmp.L;
-                this.R = tmp.R;
-            } else if (this.R == null) {
-                AVL tmp = this.L;
-                this.root = tmp.root;
-                this.L = tmp.L;
-                this.R = tmp.R;
+    public int remove(Color color) {
+        int h;
+        if (lowerThan(color, this.root)) {
+            if (this.L.isLeaf()) {
+                this.L = null;
+                h = (this.R == null) ? +1 : 0;
             } else {
-                Color r = this.L.max();
-                this.root = r;
-                this.L.remove(r);
+                h = this.L.remove(color);
+            }
+        } else if (greaterThan(color, this.root)) {
+            if (this.R.isLeaf()) {
+                this.R = null;
+                h = (this.L == null) ? -1 : 0;
+            } else {
+                h = -this.R.remove(color);
+            }
+        } else {
+            if (this.L == null && this.R != null) {
+                this.root = this.R.root;
+                this.bal = this.R.bal;
+                this.L = this.R.L;
+                this.R = this.R.R;
+                return -1;
+            } else if (this.R == null) {
+                this.root = this.L.root;
+                this.bal = this.L.bal;
+                this.R = this.L.R;
+                this.L = this.L.L;
+                return -1;
+            } else {
+                this.root = this.L.max();
+                h = this.L.remove_max();
             }
         }
+        if (h == 0) {
+            return 0;
+        } else {
+            this.bal += h;
+            this.balance();
+            return (this.bal == 0) ? -1 : 0;
+        }
+    }
+
+    /**
+     * Return if the root of AVL is a leaf
+     *
+     * @return boolean
+     */
+    private boolean isLeaf() {
+        return this.L == null && this.R == null;
+    }
+
+    /**
+     * Remove the maximum color from the AVL
+     *
+     * @return the height variation
+     */
+    private int remove_max() {
+        if (this.R == null) {
+            this.root = this.L.root;
+            this.bal = this.L.bal;
+            this.R = this.L.R;
+            this.L = this.L.L;
+            return -1;
+        } else {
+            int h = this.R.remove_max();
+            if (h == 0) {
+                return 0;
+            } else {
+                this.bal += h;
+                this.balance();
+                return (this.bal == 0) ? -1 : 0;
+            }
+        }
+    }
+
+    /**
+     * Return the AVL having color as root or null if the AVL does not have a
+     * color as node value
+     *
+     * @param hex a String object containing the hexadecimal code of the color
+     * @return an AVL
+     */
+    public AVL search(String hex) {
+        return this.search(ImagePNG.hexToColor(hex));
     }
 
     /**
