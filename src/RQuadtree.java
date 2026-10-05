@@ -1,9 +1,9 @@
 
 import java.awt.Color;
-import java.io.IOException;
 
 public class RQuadtree {
     private final Point bottomRight;
+    private final ImagePNG image;
     private final Point topLeft;
 
     private RQuadtree NO;
@@ -32,6 +32,8 @@ public class RQuadtree {
     private RQuadtree(ImagePNG image, Point topLeftPoint, Point bottomRightPoint) {
         this.bottomRight = bottomRightPoint;
         this.topLeft = topLeftPoint;
+        this.image = image;
+
         this.buildFromImage(image);
     }
 
@@ -198,32 +200,20 @@ public class RQuadtree {
         this.SO = null;
     }
 
-    /**
-     * Saves the RQuadtree to an ImagePNG file.
-     *
-     * @param sourceImage The source image to use for the save operation.
-     * @param filename    The file name to save to.
-     */
-    public void saveToPNG(ImagePNG sourceImage, String filename) {
-        ImagePNG image = new ImagePNG(sourceImage);
-        this.toImagePNG(image);
-
-        try {
-            image.save(File.TARGET + filename + File.PNG_FILE);
-        } catch (IOException e) {
-            System.err.println("An IO exception occurred while saving the RQuadtree image.");
-        }
+    public ImagePNG toPNG() {
+        ImagePNG pngImage = new ImagePNG(image);
+        this.buildToPNG(pngImage);
+        return pngImage;
     }
 
-    private ImagePNG toImagePNG(ImagePNG image) {
+    private void buildToPNG(ImagePNG image) {
         if (this.color == null)
             for (RQuadtree child : this.getChildren())
-                image = child.toImagePNG(image);
+                child.buildToPNG(image);
         else
             for (int x = this.topLeft.x; x < this.bottomRight.x; x++)
                 for (int y = this.topLeft.y; y < this.bottomRight.y; y++)
                     image.setPixel(x, y, this.color);
-        return image;
     }
 
     @Override
