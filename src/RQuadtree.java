@@ -1,3 +1,4 @@
+package AllainAllain.src;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -124,7 +125,7 @@ public class RQuadtree {
             this.compressToRoot();
         } else if (this.color == null) {
             for (RQuadtree child : this.getChildren()) {
-                child.compressPhi(phi/4);
+                child.compressPhi(phi / 4);
             }
         }
     }
@@ -133,7 +134,9 @@ public class RQuadtree {
      * Compress the tree to a root only containing the average color
      */
     private void compressToRoot() {
-        if (this.color != null) return;
+        if (this.color != null) {
+            return;
+        }
         for (RQuadtree child : this.getChildren()) {
             child.compressToRoot();
         }
