@@ -1,5 +1,6 @@
 import java.awt.Color;
 import java.util.ArrayList;
+import java.io.IOException;
 
 public class Test_AVL {
 
@@ -12,7 +13,7 @@ public class Test_AVL {
         return true;
     }
 
-    public static void test_AVL(ImagePNG img) {
+    public static void testBuilders(ImagePNG img) {
         // AVL build by an image
         AVL avlImg = new AVL(img);
         String avlImgString = avlImg.dfs();
@@ -26,7 +27,16 @@ public class Test_AVL {
         assert avlImgString.equals(avlRqString);
     }
 
+    public static void testAdds(ImagePNG img) {
+        
+    }
+
     public static void main(String[] args) {
-        test_AVL(args[0]);
+        try {
+            ImagePNG image = new ImagePNG(args[0]);
+            testBuilders(image);
+        } catch (IOException e) {
+            System.out.printf("An IO exception occurred.\n%s", e);
+        }
     }
 }

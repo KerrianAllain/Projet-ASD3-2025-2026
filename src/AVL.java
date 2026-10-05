@@ -2,6 +2,7 @@
 import java.awt.Color;
 
 public class AVL implements Cloneable {
+
     private Color root;
     private int bal;
     private AVL L;
@@ -13,7 +14,7 @@ public class AVL implements Cloneable {
      * @param img an ImagePNG object
      */
     public AVL(ImagePNG img) {
-        this.root = img.getPixel(0, 0);
+        this.root = null;
         this.bal = 0;
         this.L = null;
         this.R = null;
@@ -36,13 +37,17 @@ public class AVL implements Cloneable {
     /**
      * Iterate over a RQuadtree to add all of its colors Only called by the
      * constructor
+     * <p>
+     * Complexity : O(n)
      *
      * @param quadtree an RQuadtree
      */
     private void buildQuadTree(RQuadtree quadtree) {
         if (quadtree.isLeaf()) {
+            // This part contain a single color
             this.add(quadtree.getColor());
         } else {
+            // Iterate over the four quadrants
             RQuadtree[] children = quadtree.getChildren();
             for (RQuadtree child : children) {
                 if (child != null) {
@@ -53,22 +58,11 @@ public class AVL implements Cloneable {
     }
 
     /**
-     * Create a clone object from this
-     *
-     * @return an AVL object
-     */
-    @Override
-    public AVL clone() {
-        AVL nv = new AVL(this.root);
-        nv.bal = this.bal;
-        nv.L = this.L;
-        nv.R = this.R;
-        return nv;
-    }
-
-    /**
-     * Iterate over an image to add all of its colors Only called by the
-     * constructor
+     * Iterate over an image to add all of its colors
+     * <p>
+     * Only called by the constructor
+     * <p>
+     * Complexity : O(log(n))
      *
      * @param img an ImagePNG object
      */
@@ -82,6 +76,8 @@ public class AVL implements Cloneable {
 
     /**
      * Create a new AVL with a value as root
+     * <p>
+     * Complexity : θ(1)
      *
      * @param c a Color object
      */
@@ -93,7 +89,8 @@ public class AVL implements Cloneable {
     }
 
     /**
-     * Return true if c1 < c2
+     * Return true if c1 < c2 <p>
+     * Complexity : θ(1)
      *
      * @param c1 a Color Object
      * @param c2 a Color Object
@@ -106,14 +103,15 @@ public class AVL implements Cloneable {
         if (c1.getRed() == c2.getRed() && c1.getGreen() < c2.getGreen()) {
             return true;
         }
-        if (c1.getRed() == c2.getRed() && c1.getGreen() == c2.getGreen() && c1.getBlue() < c2.getBlue()) {
-            return true;
-        }
-        return false;
+        return c1.getRed() == c2.getRed()
+                && c1.getGreen() == c2.getGreen()
+                && c1.getBlue() < c2.getBlue();
     }
 
     /**
      * Return true if c1 > c2
+     * <p>
+     * Complexity : θ(1)
      *
      * @param c1 a Color Object
      * @param c2 a Color Object
@@ -126,14 +124,15 @@ public class AVL implements Cloneable {
         if (c1.getRed() == c2.getRed() && c1.getGreen() > c2.getGreen()) {
             return true;
         }
-        if (c1.getRed() == c2.getRed() && c1.getGreen() == c2.getGreen() && c1.getBlue() > c2.getBlue()) {
-            return true;
-        }
-        return false;
+        return c1.getRed() == c2.getRed()
+                && c1.getGreen() == c2.getGreen()
+                && c1.getBlue() > c2.getBlue();
     }
 
     /**
      * Return true if c1 == c2
+     * <p>
+     * Complexity : θ(1)
      *
      * @param c1 a Color Object
      * @param c2 a Color Object
@@ -147,7 +146,7 @@ public class AVL implements Cloneable {
      * Add a color to the AVL
      *
      * @param hex a String object containing the hexadecimal code of the color
-     *            to add
+     * to add
      */
     public void add(String hex) {
         this.addHeightVar(ImagePNG.hexToColor(hex));
@@ -155,6 +154,8 @@ public class AVL implements Cloneable {
 
     /**
      * Add a color to the AVL
+     * <p>
+     * Complexity : O(log(n))
      *
      * @param color a Color Object color must not already be in the AVL
      */
@@ -168,6 +169,8 @@ public class AVL implements Cloneable {
 
     /**
      * Add a color to the AVL by recursive calls
+     * <p>
+     * Complexity : O(log(n))
      *
      * @param color an Color Object
      * @return int the difference of heigth of the AVL
@@ -175,6 +178,7 @@ public class AVL implements Cloneable {
     private int addHeightVar(Color color) {
         int h;
         if (lowerThan(color, this.root)) {
+            // If color < this.root then it must be add to the right subtree
             if (this.L != null) {
                 h = -this.L.addHeightVar(color);
             } else {
@@ -182,6 +186,7 @@ public class AVL implements Cloneable {
                 h = -1;
             }
         } else if (greaterThan(color, this.root)) {
+            // If color > this.root then it must be add to the right subtree
             if (this.R != null) {
                 h = this.R.addHeightVar(color);
             } else {
@@ -189,11 +194,13 @@ public class AVL implements Cloneable {
                 h = 1;
             }
         } else {
+            // Else then this.root = color so we don't need to add it again
             return 0;
         }
         if (h == 0) {
             return 0;
         } else {
+            // If there is a variantion in height it might need a rebalance
             this.bal += h;
             this.balance();
             return (this.bal == 0) ? 0 : 1;
@@ -202,6 +209,8 @@ public class AVL implements Cloneable {
 
     /**
      * Balance the AVL depending on this.bal
+     * <p>
+     * Complexity : θ(1)
      */
     private void balance() {
         if (this.bal == 2) {
@@ -223,6 +232,8 @@ public class AVL implements Cloneable {
 
     /**
      * Make a rotation to the left to rebalance
+     * <p>
+     * Complexity : θ(1)
      */
     private void ROTL() {
         AVL B = this.R.clone();
@@ -241,6 +252,8 @@ public class AVL implements Cloneable {
 
     /**
      * Make a rotation to the right to rebalance
+     * <p>
+     * Complexity : θ(1)
      */
     private void ROTR() {
         AVL B = this.L.clone();
@@ -259,6 +272,8 @@ public class AVL implements Cloneable {
 
     /**
      * Remove a color
+     * <p>
+     * Complexity : O(log(n))
      *
      * @param hex a String object containing the hexadecimal code of the color
      */
@@ -268,39 +283,55 @@ public class AVL implements Cloneable {
 
     /**
      * Remove a color
+     * <p>
+     * Complexity : O(log(n))
      *
      * @param color a Color Object color must be in the AVL
      */
     private int removeHeightVar(Color color) {
         int h;
         if (lowerThan(color, this.root)) {
+            // If color < this.root so it must be in this.L
             if (this.L.isLeaf()) {
+                // If this.L is a leaf this means that there only color in this subtree
                 this.L = null;
                 h = (this.R == null) ? +1 : 0;
             } else {
                 h = this.L.removeHeightVar(color);
             }
         } else if (greaterThan(color, this.root)) {
+            // If color < this.root so it must be in this.R
             if (this.R.isLeaf()) {
+                // If this.R is a leaf this means that there only color in this subtree
                 this.R = null;
                 h = (this.L == null) ? -1 : 0;
             } else {
                 h = -this.R.removeHeightVar(color);
             }
         } else {
-            if (this.L == null && this.R != null) {
+            // Else this means that tis.root == color and that
+            if (this.isLeaf()) {
+                // Only possible if the hole tree (not just subtree) contain only one color
+                this.root = null;
+                return -1;
+            } else if (this.L == null && this.R != null) {
+                // If there is nothing on the left we just keep the right subtree
                 this.root = this.R.root;
                 this.bal = this.R.bal;
                 this.L = this.R.L;
                 this.R = this.R.R;
                 return -1;
             } else if (this.R == null) {
+                // If there is nothing on the right we just keep the left subtree
                 this.root = this.L.root;
                 this.bal = this.L.bal;
                 this.R = this.L.R;
                 this.L = this.L.L;
                 return -1;
             } else {
+                // Else we put the maximum of the left subtree
+                // (the maximum value under this.root) as new root and
+                // remove it from the left subtree
                 this.root = this.L.max();
                 h = this.L.remove_max();
             }
@@ -308,6 +339,7 @@ public class AVL implements Cloneable {
         if (h == 0) {
             return 0;
         } else {
+            // If there is a variantion in height it might need a rebalance
             this.bal += h;
             this.balance();
             return (this.bal == 0) ? -1 : 0;
@@ -316,8 +348,10 @@ public class AVL implements Cloneable {
 
     /**
      * Return if the root of AVL is a leaf
+     * <p>
+     * Complexity : θ(1)
      *
-     * @return boolean
+     * @return a boolean
      */
     private boolean isLeaf() {
         return this.L == null && this.R == null;
@@ -325,21 +359,27 @@ public class AVL implements Cloneable {
 
     /**
      * Remove the maximum color from the AVL
+     * <p>
+     * Complexity : O(log(n))
      *
      * @return the height variation
      */
     private int remove_max() {
         if (this.R == null) {
+            // If this.R is null this means this.root is the maximum value
+            // So we just keep the left subtree
             this.root = this.L.root;
             this.bal = this.L.bal;
             this.R = this.L.R;
             this.L = this.L.L;
             return -1;
         } else {
+            // Else we continue with the right subtree because it is a  Binary Search Tree
             int h = this.R.remove_max();
             if (h == 0) {
                 return 0;
             } else {
+                // If there is a variantion in height it might need a rebalance
                 this.bal += h;
                 this.balance();
                 return (this.bal == 0) ? -1 : 0;
@@ -350,9 +390,11 @@ public class AVL implements Cloneable {
     /**
      * Return the AVL having color as root or null if the AVL does not have a
      * color as node value
+     * <p>
+     * Complexity : O(log(n))
      *
      * @param hex a String object containing the hexadecimal code of the color
-     * @return an AVL
+     * @return an AVL containg color as root
      */
     public AVL search(String hex) {
         return this.search(ImagePNG.hexToColor(hex));
@@ -361,11 +403,13 @@ public class AVL implements Cloneable {
     /**
      * Return the AVL having color as root or null if the AVL does not have a
      * color as node value
+     * <p>
+     * Complexity : O(log(n))
      *
      * @param color a Color Object
-     * @return an AVL
+     * @return an AVL containing color as root
      */
-    public AVL search(Color color) {
+    private AVL search(Color color) {
         if (equals(this.root, color)) {
             return this;
         } else if (lowerThan(color, this.root)) {
@@ -385,6 +429,8 @@ public class AVL implements Cloneable {
 
     /**
      * Return the max node value from the AVL
+     * <p>
+     * Complexity : O(log(n))
      *
      * @return a Color Object
      */
@@ -393,6 +439,13 @@ public class AVL implements Cloneable {
     }
 
     @Override
+    /**
+     * Create a String representation of tha AVL
+     * <p>
+     * Complexity : O(log(n))
+     *
+     * @return a String value
+     */
     public String toString() {
         String res = new String();
         if (this.L != null) {
@@ -407,6 +460,13 @@ public class AVL implements Cloneable {
         return res;
     }
 
+    /**
+     * Return the Deep-First Search representation of the AVL
+     * <p>
+     * Complexity : θ(1)
+     *
+     * @return a String value
+     */
     public String dfs() {
         String res = new String();
         if (this.L != null) {
@@ -419,5 +479,21 @@ public class AVL implements Cloneable {
             res += this.R.dfs();
         }
         return res;
+    }
+
+    /**
+     * Create a clone object from this
+     * <p>
+     * Complexity : θ(1)
+     *
+     * @return an AVL object
+     */
+    @Override
+    public AVL clone() {
+        AVL nv = new AVL(this.root);
+        nv.bal = this.bal;
+        nv.L = this.L;
+        nv.R = this.R;
+        return nv;
     }
 }
