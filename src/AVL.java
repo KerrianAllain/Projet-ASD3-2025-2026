@@ -1,9 +1,7 @@
-package AllainAllain.src;
 
 import java.awt.Color;
 
 public class AVL implements Cloneable {
-
     private Color root;
     private int bal;
     private AVL L;
@@ -149,7 +147,7 @@ public class AVL implements Cloneable {
      * Add a color to the AVL
      *
      * @param hex a String object containing the hexadecimal code of the color
-     * to add
+     *            to add
      */
     public void add(String hex) {
         this.addHeightVar(ImagePNG.hexToColor(hex));

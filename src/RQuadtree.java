@@ -1,10 +1,8 @@
-package AllainAllain.src;
 
 import java.awt.Color;
 import java.io.IOException;
 
 public class RQuadtree {
-
     private final Point bottomRight;
     private final Point topLeft;
 
@@ -27,8 +25,8 @@ public class RQuadtree {
     /**
      * Builds a quadrant of the image.
      *
-     * @param image The ImagePNG to build the RQuadtree from.
-     * @param topLeftPoint Top-left coordinates (inclusive).
+     * @param image            The ImagePNG to build the RQuadtree from.
+     * @param topLeftPoint     Top-left coordinates (inclusive).
      * @param bottomRightPoint Bottom-right coordinates (exclusive).
      */
     private RQuadtree(ImagePNG image, Point topLeftPoint, Point bottomRightPoint) {
@@ -45,9 +43,8 @@ public class RQuadtree {
         int quadrantWidth = bRx - tLx;
 
         // The current quadrant is either invalid or empty.
-        if (quadrantWidth <= 0 || quadrantHeight <= 0) {
+        if (quadrantWidth <= 0 || quadrantHeight <= 0)
             return;
-        }
 
         // The current quadrant is equivalent to a pixel size (1x1).
         if (this.isQuadrantHomogeneous(image)) {
@@ -69,9 +66,8 @@ public class RQuadtree {
         for (int x = this.topLeft.x; x < this.bottomRight.x; x++) {
             for (int y = this.topLeft.y; y < this.bottomRight.y; y++) {
                 // The current color is different from the reference.
-                if (!reference.equals(image.getPixel(x, y))) {
+                if (!reference.equals(image.getPixel(x, y)))
                     return false;
-                }
             }
         }
         return true;
@@ -81,7 +77,7 @@ public class RQuadtree {
      * @return The four children of the node in clockwise order.
      */
     protected RQuadtree[] getChildren() {
-        return new RQuadtree[]{this.NO, this.NE, this.SE, this.SO};
+        return new RQuadtree[] { this.NO, this.NE, this.SE, this.SO };
     }
 
     /**
@@ -91,9 +87,8 @@ public class RQuadtree {
      * @throws IllegalArgumentException If lambda is outside the range [0, 255].
      */
     public void compressLambda(int lambda) {
-        if (lambda < 0 || lambda > 255) {
+        if (lambda < 0 || lambda > 255)
             throw new IllegalArgumentException("Lambda value must be between 0 and 255.");
-        }
 
         // An overleaf can be compressed.
         if (this.isOverLeaf()) {
@@ -107,39 +102,36 @@ public class RQuadtree {
         }
 
         // Compress each existing child.
-        for (RQuadtree child : this.getChildren()) {
-            if (child != null) {
+        for (RQuadtree child : this.getChildren())
+            if (child != null)
                 child.compressLambda(lambda);
-            }
-        }
     }
 
     /**
-     * Recusrively compressthe tree according to the given number of maximum
-     * leafs
+     * Recursively compress the tree according to the given number of leaves.
      *
-     * @param phi The maximum nuber of leafs (must be a power of 4)
+     * @param phi The maximum number of leaves (must be a power of 4).
      */
     public void compressPhi(int phi) {
         if (phi == 1) {
             this.compressToRoot();
-        } else if (this.color == null) {
-            for (RQuadtree child : this.getChildren()) {
-                child.compressPhi(phi / 4);
-            }
+            return;
         }
+
+        if (this.color == null)
+            for (RQuadtree child : this.getChildren())
+                child.compressPhi(phi / 4);
     }
 
     /**
      * Compress the tree to a root only containing the average color
      */
     private void compressToRoot() {
-        if (this.color != null) {
+        if (this.color != null)
             return;
-        }
-        for (RQuadtree child : this.getChildren()) {
+
+        for (RQuadtree child : this.getChildren())
             child.compressToRoot();
-        }
 
         Color averageColor = this.averageColor();
         this.processCompression(averageColor);
@@ -150,9 +142,8 @@ public class RQuadtree {
      */
     private boolean isOverLeaf() {
         for (RQuadtree child : this.getChildren()) {
-            if (child == null || !child.isLeaf()) {
+            if (child == null || !child.isLeaf())
                 return false;
-            }
         }
         return true;
     }
@@ -162,9 +153,8 @@ public class RQuadtree {
      */
     protected boolean isLeaf() {
         for (RQuadtree child : this.getChildren()) {
-            if (child != null) {
+            if (child != null)
                 return false;
-            }
         }
         return true;
     }
@@ -208,6 +198,34 @@ public class RQuadtree {
         this.SO = null;
     }
 
+    /**
+     * Saves the RQuadtree to an ImagePNG file.
+     *
+     * @param sourceImage The source image to use for the save operation.
+     * @param filename    The file name to save to.
+     */
+    public void saveToPNG(ImagePNG sourceImage, String filename) {
+        ImagePNG image = new ImagePNG(sourceImage);
+        this.toImagePNG(image);
+
+        try {
+            image.save(File.TARGET + filename + File.PNG_FILE);
+        } catch (IOException e) {
+            System.err.println("An IO exception occurred while saving the RQuadtree image.");
+        }
+    }
+
+    private ImagePNG toImagePNG(ImagePNG image) {
+        if (this.color == null)
+            for (RQuadtree child : this.getChildren())
+                image = child.toImagePNG(image);
+        else
+            for (int x = this.topLeft.x; x < this.bottomRight.x; x++)
+                for (int y = this.topLeft.y; y < this.bottomRight.y; y++)
+                    image.setPixel(x, y, this.color);
+        return image;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -235,31 +253,6 @@ public class RQuadtree {
         builder.append(" ");
         this.SO.buildPath(builder);
         builder.append(")");
-    }
-
-    public void saveToPNG(ImagePNG img0, String filename) {
-        ImagePNG img = new ImagePNG(img0);
-        this.toImagePNG(img);
-        try {
-            img.save(filename);
-        } catch (IOException e) {
-            System.out.println("IOException while saving RQuadtree image");
-        }
-    }
-
-    private ImagePNG toImagePNG(ImagePNG img) {
-        if (this.color == null) {
-            for (RQuadtree child : this.getChildren()) {
-                img = child.toImagePNG(img);
-            }
-        } else {
-            for (int x = this.topLeft.x; x < this.bottomRight.x; x++) {
-                for (int y = this.topLeft.y; y < this.bottomRight.y; y++) {
-                    img.setPixel(x, y, this.color);
-                }
-            }
-        }
-        return img;
     }
 
     protected Color getColor() {
