@@ -149,7 +149,7 @@ public class AVL implements Cloneable {
      * to add
      */
     public void add(String hex) {
-        this.addHeightVar(ImagePNG.hexToColor(hex));
+        this.add(ImagePNG.hexToColor(hex));
     }
 
     /**
@@ -309,7 +309,7 @@ public class AVL implements Cloneable {
                 h = -this.R.removeHeightVar(color);
             }
         } else {
-            // Else this means that tis.root == color and that
+            // Else this means that this.root == color
             if (this.isLeaf()) {
                 // Only possible if the hole tree (not just subtree) contain only one color
                 this.root = null;
@@ -333,7 +333,12 @@ public class AVL implements Cloneable {
                 // (the maximum value under this.root) as new root and
                 // remove it from the left subtree
                 this.root = this.L.max();
-                h = this.L.remove_max();
+                if (this.L.isLeaf()) {
+                    // Then this.L can be remove
+                    this.L = null;
+                    h = 1;
+                }
+                else h = this.L.remove_max();
             }
         }
         if (h == 0) {
@@ -365,6 +370,7 @@ public class AVL implements Cloneable {
      * @return the height variation
      */
     private int remove_max() {
+        int h;
         if (this.R == null) {
             // If this.R is null this means this.root is the maximum value
             // So we just keep the left subtree
@@ -373,17 +379,21 @@ public class AVL implements Cloneable {
             this.R = this.L.R;
             this.L = this.L.L;
             return -1;
+        } else if (this.R.isLeaf()) {
+            // If this.R is a leaf so we just need to remove this node
+            this.R = null;
+            h = (this.L == null) ? -1 : 0;
         } else {
             // Else we continue with the right subtree because it is a  Binary Search Tree
-            int h = this.R.remove_max();
-            if (h == 0) {
-                return 0;
-            } else {
-                // If there is a variantion in height it might need a rebalance
-                this.bal += h;
-                this.balance();
-                return (this.bal == 0) ? -1 : 0;
-            }
+            h = this.R.remove_max();
+        }
+        if (h == 0) {
+            return 0;
+        } else {
+            // If there is a variantion in height it might need a rebalance
+            this.bal += h;
+            this.balance();
+            return (this.bal == 0) ? -1 : 0;
         }
     }
 
