@@ -122,7 +122,7 @@ public class RQuadtree {
     public void compressPhi(int phi) {
         if (phi == 1) {
             this.compressToRoot();
-        } else {
+        } else if (this.color == null) {
             for (RQuadtree child : this.getChildren()) {
                 child.compressPhi(phi/4);
             }
