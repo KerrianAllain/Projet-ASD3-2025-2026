@@ -99,7 +99,7 @@ public class AVL implements Cloneable {
      * @param c2 a Color Object
      * @return boolean
      */
-    public boolean lowerThan(Color c1, Color c2) {
+    public static boolean lowerThan(Color c1, Color c2) {
         if (c1.getRed() < c2.getRed()) {
             return true;
         }
@@ -119,7 +119,7 @@ public class AVL implements Cloneable {
      * @param c2 a Color Object
      * @return boolean
      */
-    public boolean greaterThan(Color c1, Color c2) {
+    public static boolean greaterThan(Color c1, Color c2) {
         if (c1.getRed() > c2.getRed()) {
             return true;
         }
@@ -139,7 +139,7 @@ public class AVL implements Cloneable {
      * @param c2 a Color Object
      * @return boolean
      */
-    public boolean equals(Color c1, Color c2) {
+    public static boolean equals(Color c1, Color c2) {
         return c1.getRed() == c2.getRed() && c1.getGreen() == c2.getGreen() && c1.getBlue() == c2.getBlue();
     }
 
@@ -403,6 +403,20 @@ public class AVL implements Cloneable {
 
         if (this.R != null) {
             res += '(' + this.R.toString() + ')';
+        }
+        return res;
+    }
+
+    public String dfs() {
+        String res = new String();
+        if (this.L != null) {
+            res += this.L.dfs();
+        }
+
+        res += ImagePNG.colorToHex(this.root);
+
+        if (this.R != null) {
+            res += this.R.dfs();
         }
         return res;
     }
