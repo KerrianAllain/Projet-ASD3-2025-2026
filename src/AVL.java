@@ -485,7 +485,7 @@ public class AVL implements Cloneable {
             res += this.L.dfs();
         }
 
-        res += ImagePNG.colorToHex(this.root);
+        res += ' ' + ImagePNG.colorToHex(this.root) + ' ';
 
         if (this.R != null) {
             res += this.R.dfs();

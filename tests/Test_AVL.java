@@ -1,17 +1,7 @@
 import java.awt.Color;
-import java.util.ArrayList;
 import java.io.IOException;
 
 public class Test_AVL {
-
-    public static boolean isSorted(ArrayList<Color> array) {
-        for (int i = 0; i < array.size() - 1; i++) {
-            if (AVL.greaterThan(array.get(i), array.get(i + 1))) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     public static void testBuilders(ImagePNG img) {
         // AVL build by an image
