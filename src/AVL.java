@@ -149,6 +149,7 @@ public class AVL implements Cloneable {
      * to add
      */
     public void add(String hex) throws NumberFormatException {
+        if (hex.length() != 6) throw new NumberFormatException("For input string: \"" + hex + "\" not valid, length different from 6");
         Color c = ImagePNG.hexToColor(hex);
         this.add(c);
     }
@@ -279,6 +280,7 @@ public class AVL implements Cloneable {
      * @param hex a String object containing the hexadecimal code of the color
      */
     public void remove(String hex) throws NumberFormatException {
+        if (hex.length() != 6) throw new NumberFormatException("For input string: \"" + hex + "\" not valid, length different from 6");
         Color c = ImagePNG.hexToColor(hex);
         this.removeHeightVar(c);
     }
@@ -409,6 +411,7 @@ public class AVL implements Cloneable {
      * @return an AVL containg color as root
      */
     public AVL search(String hex) throws NumberFormatException {
+        if (hex.length() != 6) throw new NumberFormatException("For input string: \"" + hex + "\" not valid, length different from 6");
         Color c = ImagePNG.hexToColor(hex);
         return this.search(c);
     }
