@@ -37,7 +37,7 @@ public class Test_AVL {
             avl.remove("000000");
             if (! avl.toString().equals("ffffff")) System.err.println("The AVL tree for i.png without #000000 isn't right");
 
-            // Adding 2 value such as we need a Rotation Right
+            // Adding 2 values such as we need a Rotation Right
             avl.add("808080");
             avl.add("000000");
             if (! avl.toString().equals("(000000)808080(ffffff)")) System.err.println("Problem in Rotation Right");
@@ -50,7 +50,7 @@ public class Test_AVL {
             avl.remove("ffffff");
             if (! avl.toString().equals("000000")) System.err.println("Problem in removing last leaf");
 
-            // Adding 2 value such as we need a Rotation Left
+            // Adding 2 values such as we need a Rotation Left
             avl.add("808080");
             avl.add("ffffff");
             if (! avl.toString().equals("(000000)808080(ffffff)")) System.err.println("Problem in Rotation Left");
@@ -59,27 +59,36 @@ public class Test_AVL {
             avl.remove("000000");
             avl.remove("808080");
 
-            // Adding 2 value such as we need a Double Rotation Right
+            // Adding 2 values such as we need a Double Rotation Right
             avl.add("000000");
             avl.add("808080");
-            if (! avl.toString().equals("(000000)808080(ffffff)")) System.out.println("Problem in Double Rotation Right");
+            if (! avl.toString().equals("(000000)808080(ffffff)")) System.err.println("Problem in Double Rotation Right");
 
             // Removing
             avl.remove("ffffff");
             avl.remove("808080");
 
-            // Adding 2 value such as we need a Double Rotation Left
+            // Adding 2 values such as we need a Double Rotation Left
             avl.add("ffffff");
             avl.add("808080");
-            if (! avl.toString().equals("(000000)808080(ffffff)")) System.out.println("Problem in Double Rotation Left");
+            if (! avl.toString().equals("(000000)808080(ffffff)")) System.err.println("Problem in Double Rotation Left");
 
             avl.add("4e4e4e");
             avl.add("242424");
             avl.add("dadada");
             // Testing removing
             avl.remove("808080");
-            if (! avl.toString().equals("((000000)242424)4e4e4e((dadada)ffffff)")) System.out.println("Problem in removing root");
-            System.out.println(avl.toString());
+            if (! avl.toString().equals("((000000)242424)4e4e4e((dadada)ffffff)")) System.err.println("Problem in removing root");
+
+            // Removing until the we have an empty AVL
+            AVL avl2 = new AVL(i);
+            avl2.remove("000000");
+            avl2.remove("ffffff");
+            if (! avl2.toString().equals("")) System.err.println("Problem in removing the last node");
+
+            // Adding a value to an empty AVL
+            avl2.add("808080");
+            if (! avl2.toString().equals("808080")) System.err.println("Problem in adding a node to an empty AVL");
         } catch (IOException e) {
             System.out.println("testRemoveAdds can not be called");
         }

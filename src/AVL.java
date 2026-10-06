@@ -457,6 +457,7 @@ public class AVL implements Cloneable {
      * @return a String value
      */
     public String toString() {
+        if (this.root == null) return "";
         String res = new String();
         if (this.L != null) {
             res += '(' + this.L.toString() + ')';
@@ -478,6 +479,7 @@ public class AVL implements Cloneable {
      * @return a String value
      */
     public String dfs() {
+        if (this.root == null) return "";
         String res = new String();
         if (this.L != null) {
             res += this.L.dfs();
