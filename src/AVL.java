@@ -148,8 +148,9 @@ public class AVL implements Cloneable {
      * @param hex a String object containing the hexadecimal code of the color
      * to add
      */
-    public void add(String hex) {
-        this.add(ImagePNG.hexToColor(hex));
+    public void add(String hex) throws NumberFormatException {
+        Color c = ImagePNG.hexToColor(hex);
+        this.add(c);
     }
 
     /**
@@ -277,8 +278,9 @@ public class AVL implements Cloneable {
      *
      * @param hex a String object containing the hexadecimal code of the color
      */
-    public void remove(String hex) {
-        this.removeHeightVar(ImagePNG.hexToColor(hex));
+    public void remove(String hex) throws NumberFormatException {
+        Color c = ImagePNG.hexToColor(hex);
+        this.removeHeightVar(c);
     }
 
     /**
@@ -406,8 +408,9 @@ public class AVL implements Cloneable {
      * @param hex a String object containing the hexadecimal code of the color
      * @return an AVL containg color as root
      */
-    public AVL search(String hex) {
-        return this.search(ImagePNG.hexToColor(hex));
+    public AVL search(String hex) throws NumberFormatException {
+        Color c = ImagePNG.hexToColor(hex);
+        return this.search(c);
     }
 
     /**

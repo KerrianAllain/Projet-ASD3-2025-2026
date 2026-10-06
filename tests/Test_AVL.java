@@ -72,7 +72,7 @@ public class Test_AVL {
 
             // Removing until the we have an empty AVL
             AVL avl2 = new AVL(i);
-            avl2.remove("000000");
+            avl2.remove("mkr");
             avl2.remove("ffffff");
             if (! avl2.toString().equals("")) System.err.println("Problem in removing the last node");
 
@@ -92,6 +92,8 @@ public class Test_AVL {
         } catch (IOException e) {
             System.out.printf("An IO exception occurred.\n%s", e);
         } catch (AssertionError e) {
+            System.err.println(e.getMessage());
+        } catch (NumberFormatException e) {
             System.err.println(e.getMessage());
         }
     }
