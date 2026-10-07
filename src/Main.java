@@ -1,11 +1,10 @@
-
 public class Main {
     public static void main(String[] args) {
         if (args.length == 0) {
-            InteractiveMode.runProject(args);
+            new InteractiveMode().runProject();
             return;
         }
 
-        NonInteractiveMode.runProject(args);
+        new NonInteractiveMode().runProject(args);
     }
 }
