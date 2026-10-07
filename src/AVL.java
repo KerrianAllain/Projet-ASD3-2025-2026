@@ -282,6 +282,7 @@ public class AVL implements Cloneable {
     public void remove(String hex) throws NumberFormatException {
         if (hex.length() != 6) throw new NumberFormatException("For input string: \"" + hex + "\" not valid, length different from 6");
         Color c = ImagePNG.hexToColor(hex);
+        if (this.search(c) == null) throw new IllegalArgumentException("Hexadecimal color: " + hex + " not in the avl.");
         this.removeHeightVar(c);
     }
 
