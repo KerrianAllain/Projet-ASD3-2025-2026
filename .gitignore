@@ -3,7 +3,7 @@
 bin
 
 # Markdown file
-*.md
+#*.md
 
 # Text files
 *.txt
