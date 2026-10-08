@@ -139,6 +139,9 @@ public class RQuadtree {
      * @implNote TODO
      */
     public void compressPhi(int phi) {
+        if (phi < 1 || phi % 4 != 1)
+            throw new IllegalArgumentException("Phi value must be positive or a power of 4.");
+
         if (phi == 1) {
             this.compressToRoot();
             return;

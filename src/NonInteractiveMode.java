@@ -1,5 +1,3 @@
-import java.io.IOException;
-
 public class NonInteractiveMode {
     /**
      * Runs the project in non-interactive mode.
@@ -13,100 +11,85 @@ public class NonInteractiveMode {
         }
 
         String filename = args[0];
-        String compressionMethod = args[1].toLowerCase();
-        int parameter = getParameter(args[2]);
+        String method = args[1].toLowerCase();
 
-        ImagePNG image = loadImage(filename);
+        int parameterValue = Utils.tryParseInteger(args[2]);
+        if (parameterValue < 0) {
+            Utils.logError("Invalid parameter value: " + args[2]);
+            return;
+        }
+
+        ImagePNG image = Utils.tryLoadImage(filename);
+        if (image == null) {
+            Utils.logError("Invalid filename: " + filename);
+            return;
+        }
+
         RQuadtree rqTree = new RQuadtree(image);
+        if (!applyCompression(rqTree, method, parameterValue))
+            return;
+
+        ImagePNG compressedImage = rqTree.toPNG();
+        String imageName = Utils.formatFilename(filename, method, String.valueOf(parameterValue));
+
         AVL avlTree = new AVL(rqTree);
-
-        applyCompression(rqTree, compressionMethod, parameter);
-
-        String imageFilename = formatFilename(filename, compressionMethod, parameter);
-
-        ImagePNG pngOfRQT = rqTree.toPNG();
-        File.saveToPNG(imageFilename, pngOfRQT);
-
-        File.saveToTXT(imageFilename, "R", rqTree.toString());
-        File.saveToTXT(imageFilename, "AVL", avlTree.toString());
-
-        double eqm = ImagePNG.computeEQM(image, pngOfRQT);
-        System.out.printf("\nEQM index is of %.2f percent.\n", eqm);
+        saveResults(imageName, compressedImage, rqTree, avlTree);
+        runFileComparison(image, filename, compressedImage, imageName);
     }
 
     /**
-     * Parse the string argument into an integer.
-     * <p>
-     * <b>Complexity: O(n)</b>, where n is the length of the argument.
+     * Applies the required compression method to the RQuadtree.
      *
-     * @param argument The string representation of the integer.
-     * @return The parsed integer.
+     * @param tree      The RQuadtree to compress.
+     * @param method    The compression method to use.
+     * @param parameter The parameter to provide to the compression.
+     * @return {@code true} if the compression was successfully applied,
+     *         {@code false} otherwise
      */
-    private static int getParameter(String argument) {
+    private static boolean applyCompression(RQuadtree tree, String method, int parameter) {
         try {
-            return Integer.parseInt(argument);
-        } catch (NumberFormatException exception) {
-            System.err.printf("Invalid parameter provided (must be an integer).\n%s\n", exception);
-            System.exit(1);
-            return -1;
+            switch (method) {
+                case "lambda":
+                    tree.compressLambda(parameter);
+                    return true;
+                case "phi":
+                    tree.compressPhi(parameter);
+                    return true;
+                default:
+                    Utils.logError("Invalid compression method provided: " + method + ".\n");
+                    return false;
+            }
+        } catch (IllegalArgumentException exception) {
+            Utils.logError(exception.getMessage());
+            return false;
         }
     }
 
     /**
-     * Loads an image from the given filename.
-     * <p>
-     * <b>Complexity: O(n)</b>, where n is the number of pixels in the image.
+     * Saves the resulting files in the target directory.
      *
-     * @param filename The name of the image file to load.
-     * @return The loaded image.
+     * @param imageName       The formatted filename.
+     * @param compressedImage The compressed RQuadtree image.
+     * @param rqTree          The RQuadtree.
+     * @param avlTree         The AVL tree.
      */
-    private static ImagePNG loadImage(String filename) {
-        try {
-            return new ImagePNG(filename);
-        } catch (IOException exception) {
-            System.err.printf("An IO exception occurred.\n%s\n", exception);
-            System.exit(1);
-            return null;
-        }
+    private static void saveResults(String imageName, ImagePNG compressedImage, RQuadtree rqTree, AVL avlTree) {
+        File.saveToPNG(imageName, compressedImage);
+        File.saveToTXT(imageName, "R", rqTree.toString());
+        File.saveToTXT(imageName, "AVL", avlTree.toString());
     }
 
     /**
-     * Applies the selected compression method to the given tree.
-     * <p>
-     * <b>Complexity: TODO</b>
+     * Runs the file comparison between the original file and the compressed file.
      *
-     * @param tree              The tree to compress.
-     * @param compressionMethod The compression method to apply.
-     * @param parameter         The parameter of the compression method.
+     * @param image           The original image.
+     * @param filename        The original filename.
+     * @param compressedImage The compressed image.
+     * @param imageName       The formatted filename.
      */
-    private static void applyCompression(RQuadtree tree, String compressionMethod, int parameter) {
-        switch (compressionMethod) {
-            case "lambda":
-                tree.compressLambda(parameter);
-                break;
-
-            case "phi":
-                tree.compressPhi(parameter);
-                break;
-
-            default:
-                System.err.printf("Invalid compression method provided: %s\n", compressionMethod);
-                System.exit(1);
-        }
-    }
-
-    /**
-     * Formats a filename for the save operations.
-     * <p>
-     * <b>Complexity: O(n)</b>, where n is the length of the filename.
-     *
-     * @param filename          The original image filename.
-     * @param compressionMethod The compression method used.
-     * @param parameter         The parameter of the compression method.
-     * @return The formatted filename.
-     */
-    private static String formatFilename(String filename, String compressionMethod, int parameter) {
-        String filenameOnly = filename.replace("images/", "").replace(".png", "");
-        return filenameOnly + "-" + compressionMethod + parameter;
+    private static void runFileComparison(ImagePNG image, String filename, ImagePNG compressedImage, String imageName) {
+        ImageWithFilename imageData2 = new ImageWithFilename(compressedImage, imageName + ".png");
+        ImageWithFilename imageData1 = new ImageWithFilename(image, filename);
+        FileComparison.compareImages(imageData1, imageData2);
     }
 }
