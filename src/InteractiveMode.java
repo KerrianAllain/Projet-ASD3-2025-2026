@@ -145,54 +145,58 @@ public class InteractiveMode {
         if (!"buildR".equals(operation))
             this.initializeTree("R");
 
-        switch (operation) {
-            case "buildR":
-                this.rqTree = new RQuadtree(this.defaultImage);
-                this.latestCompressionParameter = null;
-                this.latestCompressionMethod = null;
+        try {
+            switch (operation) {
+                case "buildR":
+                    this.rqTree = new RQuadtree(this.defaultImage);
+                    this.latestCompressionParameter = null;
+                    this.latestCompressionMethod = null;
 
-                Utils.logSuccess("The RQuadtree is built from the source image.");
-                break;
+                    Utils.logSuccess("The RQuadtree is built from the source image.");
+                    break;
 
-            case "compressPhi":
-                int phiParameter = Utils.getParameter("Phi value: ");
-                rqTree.compressPhi(phiParameter);
+                case "compressPhi":
+                    int phiParameter = Utils.getParameter("Phi value: ");
+                    rqTree.compressPhi(phiParameter);
 
-                this.latestCompressionParameter = Integer.toString(phiParameter);
-                this.latestCompressionMethod = "phi";
+                    this.latestCompressionParameter = Integer.toString(phiParameter);
+                    this.latestCompressionMethod = "phi";
 
-                Utils.logSuccess("Phi compression terminated.");
-                break;
+                    Utils.logSuccess("Phi compression terminated.");
+                    break;
 
-            case "compressLambda":
-                int lambdaParameter = Utils.getParameter("Lambda value: ");
-                this.rqTree.compressLambda(lambdaParameter);
+                case "compressLambda":
+                    int lambdaParameter = Utils.getParameter("Lambda value: ");
+                    this.rqTree.compressLambda(lambdaParameter);
 
-                this.latestCompressionParameter = Integer.toString(lambdaParameter);
-                this.latestCompressionMethod = "lambda";
+                    this.latestCompressionParameter = Integer.toString(lambdaParameter);
+                    this.latestCompressionMethod = "lambda";
 
-                Utils.logSuccess("Lambda compression terminated.");
-                break;
+                    Utils.logSuccess("Lambda compression terminated.");
+                    break;
 
-            case "saveRtoPNG":
-                ImagePNG rqTreeToPNG = this.rqTree.toPNG();
-                File.saveToPNG(Utils.formatFilename(
-                        this.filename,
-                        this.latestCompressionMethod,
-                        this.latestCompressionParameter),
-                        rqTreeToPNG);
-                break;
+                case "saveRtoPNG":
+                    ImagePNG rqTreeToPNG = this.rqTree.toPNG();
+                    File.saveToPNG(Utils.formatFilename(
+                            this.filename,
+                            this.latestCompressionMethod,
+                            this.latestCompressionParameter),
+                            rqTreeToPNG);
+                    break;
 
-            case "saveRtoTXT":
-                File.saveToTXT(Utils.formatFilename(
-                        this.filename,
-                        this.latestCompressionMethod,
-                        this.latestCompressionParameter),
-                        "R", this.rqTree);
-                break;
+                case "saveRtoTXT":
+                    File.saveToTXT(Utils.formatFilename(
+                            this.filename,
+                            this.latestCompressionMethod,
+                            this.latestCompressionParameter),
+                            "R", this.rqTree);
+                    break;
 
-            default:
-                throw new IllegalArgumentException("Unknown RQuadtree operation: " + operation);
+                default:
+                    throw new IllegalArgumentException("Unknown RQuadtree operation: " + operation);
+            }
+        } catch (IllegalArgumentException exception) {
+            Utils.logError(exception.getMessage());
         }
     }
 
