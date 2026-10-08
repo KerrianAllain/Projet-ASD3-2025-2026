@@ -2,55 +2,61 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class File {
-    private static final String TARGET = "target/";
+    private static final String PROJECT = "AllainAllain/";
+    private static final String TARGET = PROJECT + "target/";
+
     private static final String TXT_FILE = ".txt";
     private static final String PNG_FILE = ".png";
 
     /**
-     * Creates the required target directory if it does not exist.
-     * <p>
-     * <b>Complexity: O(1)</b>.
+     * Opens a PNG file with the default application.
      *
-     * @param target The path of the directory to create.
+     * @param path Path to the PNG file.
      */
-    private static void createTargetDirectory(String target) {
-        java.io.File targetDirectory = new java.io.File(target);
-        if (!targetDirectory.exists() && !targetDirectory.mkdirs())
-            throw new IllegalStateException("Unable to create directory: " + target);
-    }
+    protected static void open(String path) {
+        if (!path.toLowerCase().endsWith(PNG_FILE)) {
+            Utils.logError("The file is not a PNG file: " + path);
+            return;
+        }
 
-    /**
-     * Lets the user know the operation was successful.
-     * <p>
-     * <b>Complexity: O(1)</b>.
-     *
-     * @param path The path where the file was saved.
-     *
-     */
-    private static void operationSuccess(String path) {
-        System.out.printf("%s saved successfully.%n", path);
+        try {
+            Process process = new ProcessBuilder("xdg-open", path).start();
+
+            if (process.waitFor() == 0) {
+                Utils.logSuccess("File " + path + " opened.");
+                return;
+            }
+
+            Utils.logError("Unable to open file: " + path);
+        } catch (IOException exception) {
+            Utils.logError("Unable to open file: " + path);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            Utils.logError("Opening file was interrupted: " + path);
+        }
     }
 
     /**
      * Saves an ImagePNG to a PNG file.
+     *
      * <p>
-     * <b>Complexity: O(1)</b>.
+     * <b>Complexity:</b> depends on {@link ImagePNG#save(String)}.
+     * </p>
      *
      * @param filename The file name without the extension.
      * @param image    The image to save.
      */
-    public static void saveToPNG(String filename, ImagePNG image) {
-        String fullTargetDirectory = TARGET + filename;
-        String fullFileName = filename + PNG_FILE;
+    protected static void saveToPNG(String filename, ImagePNG image) {
+        String path = TARGET + filename + "/" + filename + PNG_FILE;
 
-        createTargetDirectory(fullTargetDirectory);
-        String path = fullTargetDirectory + "/" + fullFileName;
+        if (!createTargetDirectory(filename))
+            return;
 
         try {
             image.save(path);
-            operationSuccess(path);
-        } catch (IOException e) {
-            System.err.println("An IO exception occurred while saving the image.");
+            Utils.logSuccess(path + " saved successfully.");
+        } catch (IOException exception) {
+            Utils.logError("An IO exception occurred while saving the image: " + exception.getMessage());
         }
     }
 
@@ -59,24 +65,42 @@ public class File {
      * <p>
      * <b>Complexity: O(n)</b>, where n is the length of the object's string
      * representation.
+     * </p>
      *
      * @param filename The filename without the extension.
      * @param treeType The tree type to append to the file name.
      * @param o        The object to save.
      */
-    public static void saveToTXT(String filename, String treeType, Object o) {
-        String fullFileName = filename + treeType + TXT_FILE;
-        String fullTargetDirectory = TARGET + filename;
-        String content = o.toString();
+    protected static void saveToTXT(String filename, String treeType, Object o) {
+        String path = TARGET + filename + "/" + filename + treeType + TXT_FILE;
 
-        createTargetDirectory(fullTargetDirectory);
-        String path = fullTargetDirectory + "/" + fullFileName;
+        if (!createTargetDirectory(filename))
+            return;
 
         try (FileWriter fw = new FileWriter(path)) {
-            fw.write(content);
-            operationSuccess(path);
+            fw.write(o.toString());
+            Utils.logSuccess(path + " saved successfully.\n");
         } catch (IOException exception) {
-            System.err.println("An IO exception occurred while saving the object.");
+            Utils.logError("An IO exception occurred while saving the object: " + exception.getMessage());
         }
+    }
+
+    /**
+     * Creates the required target directory if it does not exist.
+     *
+     * <p>
+     * <b>Complexity: O(1)</b>.
+     * </p>
+     *
+     * @param path The path of the directory to create.
+     */
+    private static boolean createTargetDirectory(String path) {
+        java.io.File targetDirectory = new java.io.File(TARGET + path);
+
+        if (targetDirectory.isDirectory() || targetDirectory.mkdirs())
+            return true;
+
+        Utils.logError("Unable to create directory: " + path);
+        return false;
     }
 }

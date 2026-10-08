@@ -1,20 +1,16 @@
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 
 public class InteractiveMode {
+    private static final List<String> DEFAULT_ACTIONS = Arrays.asList("menu", "compare", "open", "quit");
     private static final List<String> RQ_TREE_ACTIONS = Arrays.asList(
-            "buildR", "compressPhi", "compressLambda", "saveToPNG", "saveRtoTXT");
+            "buildR", "compressPhi", "compressLambda", "saveRtoPNG", "saveRtoTXT");
     private static final List<String> AVL_TREE_ACTIONS = Arrays.asList(
-            "avlFromImage", "avlFromR", "saveAVLToTXT", "avlAction");
-    private static final String SEPARATOR = "──────────────────────";
-    private static final Scanner scanner = new Scanner(System.in);
-    private static final String IMAGES_DIRECTORY = "images/";
+            "avlFromImage", "avlFromR", "saveAVLtoTXT", "avlAction");
+    private static final String SEPARATOR = "────────────────";
 
     private String latestCompressionParameter;
     private String latestCompressionMethod;
-    private String cleanedFileName;
     private ImagePNG defaultImage;
     private RQuadtree rqTree;
     private String filename;
@@ -24,91 +20,67 @@ public class InteractiveMode {
      * Runs the project in interactive mode.
      */
     public void runProject() {
-        this.filename = this.askForInput("Image name (images/ is automatically added): ");
-        this.defaultImage = loadImage(IMAGES_DIRECTORY + this.filename);
-
+        System.out.println("Running project in interactive mode.");
         this.displayMenu();
 
-        boolean keepRunning = true;
-        while (keepRunning) {
-            String operation = this.askForInput("\nOperation to perform: ");
+        while (true) {
+            String operation = Utils.askForInput("\nOperation to perform: ");
 
-            if (operation.equals("menu"))
-                this.displayMenu();
-            else if (RQ_TREE_ACTIONS.contains(operation))
-                this.processRQTreeAction(operation);
-            else if (operation.equals("compare"))
-                this.compareImages();
-            else if (AVL_TREE_ACTIONS.contains(operation))
-                this.processAVLTreeAction(operation);
-            else if (operation.equals("quit"))
-                keepRunning = false;
-            else
-                System.out.println("This operation is not available.");
+            if (DEFAULT_ACTIONS.contains(operation))
+                this.processDefaultAction(operation);
+            else {
+                if (RQ_TREE_ACTIONS.contains(operation))
+                    this.processRQTreeAction(operation);
+                else if (AVL_TREE_ACTIONS.contains(operation))
+                    this.processAVLTreeAction(operation);
+                else
+                    Utils.logError("This operation is not available.");
+            }
         }
     }
 
     /**
-     * Display the query and return the user input.
-     * <p>
-     * <b>Complexity: O(1)</b>.
+     * Displays the available operations in a formatted menu.
      *
-     * @param query The query for the user.
-     * @return The user input.
-     */
-    private String askForInput(String query) {
-        System.out.print(query);
-        return scanner.next();
-    }
-
-    /**
-     * Loads an image from the given filename.
      * <p>
-     * <b>Complexity: O(n)</b>, where n is the number of pixels in the image.
-     *
-     * @param filename The name of the image file to load.
-     * @return The loaded image.
-     */
-    private static ImagePNG loadImage(String filename) {
-        try {
-            ImagePNG image = new ImagePNG(filename);
-            System.out.printf("[SUCCESS] File %s loaded.%n", filename);
-            return image;
-        } catch (IOException exception) {
-            System.err.printf("An IO exception occurred.\n%s\n", exception);
-            System.exit(1);
-            return null;
-        }
-    }
-
-    /**
-     * Displays the options menu to the user.
+     * <b>Complexity: O(n)</b>, where {@code n} is the size of the largest list.
+     * </p>
      */
     private void displayMenu() {
         System.out.println();
 
-        System.out.printf("┌%s┬%s┐%n", SEPARATOR, SEPARATOR);
-        System.out.printf("│ %-20s │ %-20s │%n", "RQ", "AVL");
-        System.out.printf("├%s┼%s┤%n", SEPARATOR, SEPARATOR);
+        System.out.printf("┌%s┬%s┬%s┐%n", SEPARATOR, SEPARATOR, SEPARATOR);
+        System.out.printf("│ %-14s │ %-14s │ %-14s │%n", "RQ", "AVL", "Default");
+        System.out.printf("├%s┼%s┼%s┤%n", SEPARATOR, SEPARATOR, SEPARATOR);
 
-        for (int i = 0; i < Math.max(RQ_TREE_ACTIONS.size(), AVL_TREE_ACTIONS.size()); i++) {
+        int numberOfRows = Math.max(RQ_TREE_ACTIONS.size(), AVL_TREE_ACTIONS.size());
+
+        for (int i = 0; i < numberOfRows; i++) {
+            String defaultAction = (i < DEFAULT_ACTIONS.size()) ? DEFAULT_ACTIONS.get(i) : "";
             String avlAction = (i < AVL_TREE_ACTIONS.size()) ? AVL_TREE_ACTIONS.get(i) : "";
             String rqAction = (i < RQ_TREE_ACTIONS.size()) ? RQ_TREE_ACTIONS.get(i) : "";
-            System.out.printf("│ %-20s │ %-20s │%n", rqAction, avlAction);
+            System.out.printf("│ %-14s │ %-14s │ %-14s │%n", rqAction, avlAction, defaultAction);
         }
 
-        System.out.printf("└%s┴%s┘%n", SEPARATOR, SEPARATOR);
+        System.out.printf("└%s┴%s┴%s┘%n", SEPARATOR, SEPARATOR, SEPARATOR);
     }
 
     /**
-     * Check if the tree is defined yet.
-     * <p>
-     * <b>Complexity: varies depending the tree to define</b>.
+     * Initializes the requested tree if it has not already been created.
      *
-     * @param tree The tree to determine if it is defined.
-     * @return true if the tree is not null.
+     * <p>
+     * The tree is built from the default source image.
+     * If the requested tree has already been initialized, this method does nothing.
+     * </p>
+     *
+     * <p>
+     * <b>Complexity:</b> depends on the tree being initialized.
+     * </p>
+     *
+     * @param treeType The type of tree to initialize: {@code "R"} for a RQuadtree
+     *                 or {@code "AVL"} for an AVL tree.
      */
-    private void defineTree(String treeType) {
+    private void initializeTree(String treeType) {
         switch (treeType) {
             case "R":
                 if (this.rqTree == null)
@@ -121,40 +93,57 @@ public class InteractiveMode {
                 break;
 
             default:
-                System.err.println("Invalid tree type provided.");
-                System.exit(1);
+                throw new IllegalArgumentException("Invalid tree type: " + treeType);
         }
     }
 
     /**
-     * Displays a success message for the given action.
-     * <p>
-     * <b>Complexity: O(1)</b>.
-     *
-     * @param action The action that was successfully performed.
+     * Prompts the user to load the default source image if not defined yet.
      */
-    private void operationSuccess(String action) {
-        System.out.printf("[SUCCESS] %s%n", action);
+    private void loadImageIfNeeded() {
+        if (this.defaultImage != null)
+            return;
+
+        ImageWithFilename imageData = Utils.getImageWithFilename("Source image filename: ");
+        this.defaultImage = imageData.image();
+        this.filename = imageData.filename();
     }
 
-    private String formatFileName() {
-        this.cleanedFileName = this.filename.replace(".png", "");
-        String compM = (this.latestCompressionMethod == null) ? "" : this.latestCompressionMethod;
-        String compP = (this.latestCompressionParameter == null) ? "" : this.latestCompressionParameter;
-        String prefix = (compM.isEmpty() && compP.isEmpty()) ? "" : "-" + compM + compP;
-        return this.cleanedFileName + prefix;
+    private void processDefaultAction(String operation) {
+        switch (operation) {
+            case "menu":
+                this.displayMenu();
+                break;
+
+            case "compare":
+                this.compareImages();
+                break;
+
+            case "open":
+                String path = Utils.askForInput("Image filename to open: ");
+                File.open(path);
+                break;
+
+            case "quit":
+                Utils.logSuccess("Quitting project.");
+                System.exit(0);
+        }
     }
 
     /**
-     * Process an operation for a RQuadtree.
+     * Process an operation on the RQuadtree.
+     *
      * <p>
-     * <b>Complexity: varies depending the operation to perform</b>.
+     * <b>Complexity:</b> depends on the operation being performed.
+     * </p>
      *
      * @param operation The operation to perform.
      */
     private void processRQTreeAction(String operation) {
-        if (!operation.equals("buildR"))
-            this.defineTree("R");
+        loadImageIfNeeded();
+
+        if (!"buildR".equals(operation))
+            this.initializeTree("R");
 
         switch (operation) {
             case "buildR":
@@ -162,126 +151,128 @@ public class InteractiveMode {
                 this.latestCompressionParameter = null;
                 this.latestCompressionMethod = null;
 
-                this.operationSuccess("The RQuadtree is built from the source image.");
+                Utils.logSuccess("The RQuadtree is built from the source image.");
                 break;
 
             case "compressPhi":
-                String phiValue = this.askForInput("Phi value: ");
-                rqTree.compressPhi(getParameterOfValue(phiValue));
+                int phiParameter = Utils.getParameter("Phi value: ");
+                rqTree.compressPhi(phiParameter);
 
-                this.latestCompressionParameter = phiValue;
+                this.latestCompressionParameter = Integer.toString(phiParameter);
                 this.latestCompressionMethod = "phi";
 
-                this.operationSuccess("Phi compression terminated.");
+                Utils.logSuccess("Phi compression terminated.");
                 break;
 
             case "compressLambda":
-                String lambdaValue = this.askForInput("Lambda value: ");
-                this.rqTree.compressLambda(getParameterOfValue(lambdaValue));
+                int lambdaParameter = Utils.getParameter("Lambda value: ");
+                this.rqTree.compressLambda(lambdaParameter);
 
-                this.latestCompressionParameter = lambdaValue;
+                this.latestCompressionParameter = Integer.toString(lambdaParameter);
                 this.latestCompressionMethod = "lambda";
 
-                this.operationSuccess("Lambda compression terminated.");
+                Utils.logSuccess("Lambda compression terminated.");
                 break;
 
-            case "saveToPNG":
+            case "saveRtoPNG":
                 ImagePNG rqTreeToPNG = this.rqTree.toPNG();
-                File.saveToPNG(this.formatFileName(), rqTreeToPNG);
+                File.saveToPNG(Utils.formatFilename(
+                        this.filename,
+                        this.latestCompressionMethod,
+                        this.latestCompressionParameter),
+                        rqTreeToPNG);
                 break;
 
             case "saveRtoTXT":
-                File.saveToTXT(this.formatFileName(), "R", this.rqTree);
+                File.saveToTXT(Utils.formatFilename(
+                        this.filename,
+                        this.latestCompressionMethod,
+                        this.latestCompressionParameter),
+                        "R", this.rqTree);
                 break;
 
             default:
-                break;
+                throw new IllegalArgumentException("Unknown RQuadtree operation: " + operation);
         }
     }
 
     /**
-     * Parse the string argument into an integer.
-     * <p>
-     * <b>Complexity: O(n)</b>, where n is the length of the argument
+     * Compare two image files by computing their EQM index and size difference.
      *
-     * @param argument The string representation of the integer.
-     * @return The parsed integer.
-     */
-    private static int getParameterOfValue(String argument) {
-        try {
-            return Integer.parseInt(argument);
-        } catch (NumberFormatException exception) {
-            System.err.printf("Invalid parameter provided (must be an integer).\n%s\n", exception);
-            System.exit(1);
-            return -1;
-        }
-    }
-
-    /**
-     * Compare two image files with their EQM index and their size difference.
      * <p>
-     * <b>Complexity: O(n)</b>.
+     * <b>Complexity:</b> depends on {@link ImagePNG#computeEQM(ImagePNG, ImagePNG)}
+     * and on the image loading operations.
+     * </p>
      */
     private void compareImages() {
-        String filename1 = this.askForInput("Enter first filename: ");
-        ImagePNG image1 = loadImage(filename1);
+        ImageWithFilename imageData1 = Utils.getImageWithFilename("First image filename: ");
+        ImageWithFilename imageData2 = Utils.getImageWithFilename("\nSecond image filename: ");
 
-        String filename2 = this.askForInput("\nEnter second filename: ");
-        ImagePNG image2 = loadImage(filename2);
+        double eqm = ImagePNG.computeEQM(imageData1.image(), imageData2.image());
+        System.out.printf("%nEQM index is %.2f percent.%n", eqm);
 
-        double eqm = ImagePNG.computeEQM(image1, image2);
-        System.out.printf("\nEQM index is of %.2f percent.\n", eqm);
-        this.compareImagesSizes(filename1, filename2);
+        this.compareImagesSizes(imageData1.filename(), imageData2.filename());
     }
 
     /**
      * Compare the sizes of two image files.
+     *
      * <p>
      * <b>Complexity: O(1)</b>.
+     * </p>
      *
-     * @param filename1 The path of the first image file.
-     * @param filename2 The path of the second image file.
+     * @param filename1 The first image filename.
+     * @param filename2 The second image filename.
      */
     private void compareImagesSizes(String filename1, String filename2) {
         java.io.File file1 = new java.io.File(filename1);
         java.io.File file2 = new java.io.File(filename2);
 
         long sizeDifference = file1.length() - file2.length();
+
         if (sizeDifference < 0)
-            System.out.printf("%s is smaller of %d bytes.", filename1, -sizeDifference);
+            System.out.printf("%s is smaller by %d bytes.%n", filename1, -sizeDifference);
         else if (sizeDifference > 0)
-            System.out.printf("%s is smaller of %d bytes.", filename2, sizeDifference);
+            System.out.printf("%s is smaller by %d bytes.%n", filename2, sizeDifference);
         else
-            System.out.println("The two files have the same size.");
+            System.out.println("The two files have the same size.\n");
     }
 
     /**
-     * Process an operation for an AVL.
+     * Process an operation on the AVL tree.
+     *
      * <p>
-     * <b>Complexity: varies depending the operation to perform</b>.
+     * <b>Complexity:</b> depends on the operation being performed.
+     * </p>
      *
      * @param operation The operation to perform.
      */
     private void processAVLTreeAction(String operation) {
+        loadImageIfNeeded();
+
         if (!operation.startsWith("avlFrom"))
-            this.defineTree("AVL");
+            this.initializeTree("AVL");
 
         switch (operation) {
             case "avlFromImage":
                 this.avlTree = new AVL(this.defaultImage);
 
-                this.operationSuccess("The AVL tree is built from the source image.");
+                Utils.logSuccess("The AVL tree is built from the source image.");
                 break;
 
             case "avlFromR":
-                this.defineTree("R");
+                this.initializeTree("R");
                 this.avlTree = new AVL(this.rqTree);
 
-                this.operationSuccess("The AVL tree is built from the RQuadtree.");
+                Utils.logSuccess("The AVL tree is built from the RQuadtree.");
                 break;
 
-            case "saveAVLToTXT":
-                File.saveToTXT(this.formatFileName(), "AVL", this.avlTree);
+            case "saveAVLtoTXT":
+                File.saveToTXT(Utils.formatFilename(
+                        this.filename,
+                        this.latestCompressionMethod,
+                        this.latestCompressionParameter),
+                        "AVL", this.avlTree);
                 break;
 
             case "avlAction":
@@ -289,42 +280,48 @@ public class InteractiveMode {
                 break;
 
             default:
-                break;
+                throw new IllegalArgumentException("Unknown RQuadtree operation: " + operation);
         }
     }
 
+    /**
+     * Performs an action on the current AVL tree.
+     */
     private void performAVLAction() {
-        String avlAction = this.askForInput("What action to perform on the AVL: ");
-        String hexColor = this.askForInput("What is the hexadecimal color: ");
+        String avlAction = Utils.askForInput("What action to perform on the AVL: ");
+        String hexColor = Utils.askForInput("What is the hexadecimal color: ");
 
         try {
             switch (avlAction) {
                 case "find":
-                    AVL foundTree = avlTree.search(hexColor);
+                    AVL foundTree = this.avlTree.search(hexColor);
+
                     if (foundTree == null)
-                        System.out.println("The hexadecimal color has not been found.");
+                        Utils.logError("The hexadecimal color has not been found.");
                     else
-                        System.out.printf("Representation of the resulting AVL:\n%s", foundTree.toString());
+                        Utils.logSuccess("Representation of the resulting AVL:\n" + foundTree.toString());
                     break;
 
                 case "insert":
                     avlTree.add(hexColor);
-                    this.operationSuccess("Hexadecimal color added to the AVL.");
+
+                    Utils.logSuccess("Hexadecimal color added to the AVL.");
                     break;
 
                 case "remove":
                     avlTree.remove(hexColor);
-                    this.operationSuccess("Hexadecimal color removed to the AVL.");
+
+                    Utils.logSuccess("Hexadecimal color removed to the AVL.");
                     break;
 
                 default:
-                    System.out.println("Invalid AVL action.");
+                    Utils.logError("Invalid AVL action.");
                     break;
             }
         } catch (NumberFormatException exception) {
-            System.err.printf("An error occurred:%n%s", exception.getMessage());
+            Utils.logError("An error occurred:\n" + exception.getMessage());
         } catch (IllegalArgumentException exception) {
-            System.err.printf("Illegal argument provided: %s", exception.getMessage());
+            Utils.logError("Illegal argument provided: " + exception.getMessage());
         }
     }
 }
