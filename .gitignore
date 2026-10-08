@@ -1,9 +1,8 @@
-# Compiled class file
-*.class
+# Compiled class files
 bin
 
-# Markdown file
-#*.md
+# Document files
+docs
 
-# Text files
-*.txt
+# Target files
+target
