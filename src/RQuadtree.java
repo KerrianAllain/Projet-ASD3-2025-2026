@@ -54,17 +54,12 @@ public class RQuadtree {
                 int tLx = this.topLeft.x, tLy = this.topLeft.y;
                 int quadrantHeight = bRy - tLy;
                 int quadrantWidth = bRx - tLx;
-
-                // The current quadrant is either invalid or empty.
-                if (quadrantWidth <= 0 || quadrantHeight <= 0)
-                    return;
                 Point middle = new Point(tLx + quadrantWidth / 2, tLy + quadrantHeight / 2);
                 this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unknown, Safety.Unknown, Safety.Unknown, Safety.Unknown);
 
             case Safe:
                 this.color = image.getPixel(this.topLeft.x, this.topLeft.y);
         }
-
     }
 
     /**
@@ -91,13 +86,14 @@ public class RQuadtree {
         // The current quadrant is equivalent to a pixel size (1x1).
         if (problematic != null) {
             Point middle = new Point(tLx + quadrantWidth / 2, tLy + quadrantHeight / 2);
-            if (problematic.y == middle.y - 1 && problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Unsafe, Safety.Unknown, Safety.Unknown);
-            if (problematic.y < middle.y && problematic.x < middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unsafe, Safety.Unknown, Safety.Unknown, Safety.Unknown);
-            if (problematic.y < middle.y && problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unknown, Safety.Unsafe, Safety.Unknown, Safety.Unknown);
+            if (quadrantWidth == 2 && quadrantHeight == 2) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Safe, Safety.Safe);
+            else if (problematic.y == middle.y - 1 && problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Unsafe, Safety.Unknown, Safety.Unknown);
+            else if (problematic.y < middle.y && problematic.x < middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unsafe, Safety.Unknown, Safety.Unknown, Safety.Unknown);
+            else if (problematic.y < middle.y && problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unknown, Safety.Unsafe, Safety.Unknown, Safety.Unknown);
 
-            if (problematic.y == bRy - 1 && problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Safe, Safety.Unsafe);
-            if (problematic.y >= middle.y && problematic.x < middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Unsafe, Safety.Unknown);
-            if (problematic.y >= middle.y && problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Unknown, Safety.Unsafe);
+            else if (problematic.y == bRy - 1 && problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Safe, Safety.Unsafe);
+            else if (problematic.y >= middle.y && problematic.x < middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Unsafe, Safety.Unknown);
+            else if (problematic.y >= middle.y && problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Unknown, Safety.Unsafe);
             return;
         }
 
