@@ -1,5 +1,11 @@
 import java.awt.Color;
 
+enum Safety {
+    Unknown,
+    Unsafe,
+    Safe
+}
+
 public class RQuadtree {
     private final Point bottomRight;
     private final ImagePNG image;
@@ -20,7 +26,7 @@ public class RQuadtree {
      * @implNote O(n²), because of the buildFromImage call.
      */
     public RQuadtree(ImagePNG image) {
-        this(image, new Point(0, 0), new Point(image.width(), image.height()));
+        this(image, new Point(0, 0), new Point(image.width(), image.height()), Safety.Unknown);
     }
 
     /**
@@ -32,12 +38,36 @@ public class RQuadtree {
      *
      * @implNote O(n²), because of the buildFromImage call.
      */
-    private RQuadtree(ImagePNG image, Point topLeftPoint, Point bottomRightPoint) {
+    private RQuadtree(ImagePNG image, Point topLeftPoint, Point bottomRightPoint, Safety level) {
         this.bottomRight = bottomRightPoint;
         this.topLeft = topLeftPoint;
         this.image = image;
 
-        this.buildFromImage(image);
+        switch (level) {
+            case Unknown:
+                System.out.println("Unknown");
+                this.buildFromImage(image);
+                break;
+
+            case Unsafe:
+                System.out.println("Unsafe");
+                // Quick access to quadrant coordinates.
+                int bRx = this.bottomRight.x, bRy = this.bottomRight.y;
+                int tLx = this.topLeft.x, tLy = this.topLeft.y;
+                int quadrantHeight = bRy - tLy;
+                int quadrantWidth = bRx - tLx;
+
+                // The current quadrant is either invalid or empty.
+                if (quadrantWidth <= 0 || quadrantHeight <= 0)
+                    return;
+                Point middle = new Point(tLx + quadrantWidth / 2, tLy + quadrantHeight / 2);
+                this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unknown, Safety.Unknown, Safety.Unknown, Safety.Unknown);
+
+            case Safe:
+                System.out.println("Safe");
+                this.color = image.getPixel(this.topLeft.x, this.topLeft.y);
+        }
+
     }
 
     /**
@@ -60,18 +90,26 @@ public class RQuadtree {
         if (quadrantWidth <= 0 || quadrantHeight <= 0)
             return;
 
+        Point problematic = this.QuadrantHomogeneous(image);
         // The current quadrant is equivalent to a pixel size (1x1).
-        if (this.isQuadrantHomogeneous(image)) {
-            this.color = image.getPixel(tLx, tLy);
+        if (problematic != null) {
+            System.out.println(problematic.x);
+            Point middle = new Point(tLx + quadrantWidth / 2, tLy + quadrantHeight / 2);
+            if (problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Unknown, Safety.Unknown);
+            else this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unknown, Safety.Unknown, Safety.Unknown, Safety.Unknown);
             return;
         }
 
-        // Divide the current quadrant into four sub-quadrants (NW, NE, SE, SW).
-        Point middle = new Point(tLx + quadrantWidth / 2, tLy + quadrantHeight / 2);
-        this.NW = new RQuadtree(image, this.topLeft, middle);
-        this.NE = new RQuadtree(image, new Point(middle.x, tLy), new Point(bRx, middle.y));
-        this.SE = new RQuadtree(image, middle, this.bottomRight);
-        this.SW = new RQuadtree(image, new Point(tLx, middle.y), new Point(middle.x, bRy));
+        this.color = image.getPixel(tLx, tLy);
+    }
+
+    private void divide(int bRx, int bRy, int tLx, int tLy, Point middle, Safety snw, Safety sne, Safety sse, Safety ssw) {
+            // Divide the current quadrant into four sub-quadrants (NW, NE, SE, SW).
+            this.NW = new RQuadtree(image, this.topLeft, middle, snw);
+            this.NE = new RQuadtree(image, new Point(middle.x, tLy), new Point(bRx, middle.y), sne);
+            this.SE = new RQuadtree(image, middle, this.bottomRight, sse);
+            this.SW = new RQuadtree(image, new Point(tLx, middle.y), new Point(middle.x, bRy), ssw);
+
     }
 
     /**
@@ -80,17 +118,17 @@ public class RQuadtree {
      *
      * @implNote O(n²), check every pixel with a reference one.
      */
-    private boolean isQuadrantHomogeneous(ImagePNG image) {
+    private Point QuadrantHomogeneous(ImagePNG image) {
         // Reference color of the quadrant to check with.
         Color reference = image.getPixel(this.topLeft.x, this.topLeft.y);
         for (int x = this.topLeft.x; x < this.bottomRight.x; x++) {
             for (int y = this.topLeft.y; y < this.bottomRight.y; y++) {
                 // The current color is different from the reference.
                 if (!reference.equals(image.getPixel(x, y)))
-                    return false;
+                    return new Point(x, y);
             }
         }
-        return true;
+        return null;
     }
 
     /**
