@@ -1,5 +1,8 @@
 import java.awt.Color;
 
+/**
+ * Enum to improve building the RQuadtree
+ */
 enum Safety {
     Unknown,
     Unsafe,
@@ -49,6 +52,8 @@ public class RQuadtree {
                 break;
 
             case Unsafe:
+                // Unsafe already tell us that we need to divide in 4 quadrants
+
                 // Quick access to quadrant coordinates.
                 int bRx = this.bottomRight.x, bRy = this.bottomRight.y;
                 int tLx = this.topLeft.x, tLy = this.topLeft.y;
@@ -56,9 +61,13 @@ public class RQuadtree {
                 int quadrantWidth = bRx - tLx;
                 Point middle = new Point(tLx + quadrantWidth / 2, tLy + quadrantHeight / 2);
                 this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unknown, Safety.Unknown, Safety.Unknown, Safety.Unknown);
+                break;
 
             case Safe:
+                // Safe means that in a Homogeneous Research we already could garanty the homogeneity of the quadrant
+                // Allows not to run through this part once again
                 this.color = image.getPixel(this.topLeft.x, this.topLeft.y);
+                break;
         }
     }
 
@@ -82,24 +91,59 @@ public class RQuadtree {
         if (quadrantWidth <= 0 || quadrantHeight <= 0)
             return;
 
+        if (quadrantHeight == 1) {
+            this.color = image.getPixel(tLx, tLy);
+            return;
+        }
+
         Point problematic = this.QuadrantHomogeneous(image);
         // The current quadrant is equivalent to a pixel size (1x1).
         if (problematic != null) {
             Point middle = new Point(tLx + quadrantWidth / 2, tLy + quadrantHeight / 2);
-            if (quadrantWidth == 2 && quadrantHeight == 2) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Safe, Safety.Safe);
-            else if (problematic.y == middle.y - 1 && problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Unsafe, Safety.Unknown, Safety.Unknown);
-            else if (problematic.y < middle.y && problematic.x < middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unsafe, Safety.Unknown, Safety.Unknown, Safety.Unknown);
-            else if (problematic.y < middle.y && problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unknown, Safety.Unsafe, Safety.Unknown, Safety.Unknown);
+            // a 2x2 bit not homogeneous need to be divide in 4 (1 px is Safe)
+            if (quadrantWidth == 2 && quadrantHeight == 2)
+                this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Safe, Safety.Safe);
 
-            else if (problematic.y == bRy - 1 && problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Safe, Safety.Unsafe);
-            else if (problematic.y >= middle.y && problematic.x < middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Unsafe, Safety.Unknown);
-            else if (problematic.y >= middle.y && problematic.x >= middle.x) this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Unknown, Safety.Unsafe);
+            // Else with the (x, y) coordinates of the first problematic pixel found
+            // We can determine 6 differents cases allowing to improve the complexity
+
+            // Here we already ran through the NW quadrant entirely and found a problematic pixel in the NE quadrant (NW is safe and NE is unsafe)
+            else if (problematic.y == middle.y - 1 && problematic.x >= middle.x)
+                this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Unsafe, Safety.Unknown, Safety.Unknown);
+            // Here we found a problematic pixel in the NW quadrant (NW is unsafe)
+            else if (problematic.y < middle.y && problematic.x < middle.x)
+                this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unsafe, Safety.Unknown, Safety.Unknown, Safety.Unknown);
+            // Here we found a problematic pixel in the NE quadrant (NE is unsafe)
+            else if (problematic.y < middle.y && problematic.x >= middle.x)
+                this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unknown, Safety.Unsafe, Safety.Unknown, Safety.Unknown);
+
+            // Here we already ran through NW, NE and SW quadrants entirely and found a problematic pixel in the SE quadrant (NW, NE and SW are safe and SE is unsafe)
+            else if (problematic.y == bRy - 1 && problematic.x >= middle.x)
+                this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Safe, Safety.Unsafe);
+            // Here we already ran through NW and NE quadrants entirely and found a problematic pixel in the SW quadrant (NW and NE are safe and SW is unsafe)
+            else if (problematic.y >= middle.y && problematic.x < middle.x)
+                this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Unknown, Safety.Unsafe);
+            // Here we already ran trough NW and NE quadrants entirely and found a problematic pixel in the SE quadrant (NW and NE are safe and SE is unsafe)
+            else if (problematic.y >= middle.y && problematic.x >= middle.x)
+                this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Unsafe, Safety.Unknown);
             return;
         }
 
         this.color = image.getPixel(tLx, tLy);
     }
 
+    /**
+     * Divide an image in four quadrants
+     * @param bRx the bottom right x coordinate
+     * @param bRy the bottom right y coordinate
+     * @param tLx the top left x coordinate
+     * @param tLy the top left y coordinate
+     * @param middle the middle point
+     * @param snw the safety degree for NW quadrant
+     * @param sne the safety degree for NE quadrant
+     * @param sse the safety degree for SE quadrant
+     * @param ssw the safety degree for SW quadrant
+     */
     private void divide(int bRx, int bRy, int tLx, int tLy, Point middle, Safety snw, Safety sne, Safety sse, Safety ssw) {
             // Divide the current quadrant into four sub-quadrants (NW, NE, SE, SW).
             this.NW = new RQuadtree(image, this.topLeft, middle, snw);
@@ -118,8 +162,8 @@ public class RQuadtree {
     private Point QuadrantHomogeneous(ImagePNG image) {
         // Reference color of the quadrant to check with.
         Color reference = image.getPixel(this.topLeft.x, this.topLeft.y);
-        for (int x = this.topLeft.x; x < this.bottomRight.x; x++) {
-            for (int y = this.topLeft.y; y < this.bottomRight.y; y++) {
+        for (int y = this.topLeft.y; y < this.bottomRight.y; y++) {
+            for (int x = this.topLeft.x; x < this.bottomRight.x; x++) {
                 // The current color is different from the reference.
                 if (!reference.equals(image.getPixel(x, y)))
                     return new Point(x, y);
