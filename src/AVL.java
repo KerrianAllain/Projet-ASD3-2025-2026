@@ -23,6 +23,8 @@ public class AVL implements Cloneable {
 
     /**
      * Create an AVL using a builder for a RQuadtree
+     * <p>
+     * Complexity : O(n)
      *
      * @param quadtree an RQuadtree Object
      */
@@ -38,7 +40,8 @@ public class AVL implements Cloneable {
      * Iterate over a RQuadtree to add all of its colors Only called by the
      * constructor
      * <p>
-     * Complexity : O(n)
+     * Complexity : O(n), at worst there is a leaf (in the RQuadtree) for every
+     * pixels
      *
      * @param quadtree an RQuadtree
      */
@@ -50,9 +53,7 @@ public class AVL implements Cloneable {
             // Iterate over the four quadrants
             RQuadtree[] children = quadtree.getChildren();
             for (RQuadtree child : children) {
-                if (child != null) {
-                    this.buildQuadTree(child);
-                }
+                this.buildQuadTree(child);
             }
         }
     }
@@ -62,7 +63,7 @@ public class AVL implements Cloneable {
      * <p>
      * Only called by the constructor
      * <p>
-     * Complexity : O(log(n))
+     * Complexity : O(n*log(n)), at worst every pixels are different from one another
      *
      * @param img an ImagePNG object
      */
@@ -144,14 +145,14 @@ public class AVL implements Cloneable {
 
     /**
      * Add a color to the AVL
+     * <p>
+     * Complexity : O(log(n))
      *
      * @param hex a String object containing the hexadecimal code of the color
      * to add
      */
     public void add(String hex) throws NumberFormatException {
-        if (hex.length() != 6) throw new NumberFormatException("For input string: \"" + hex + "\" not valid, length different from 6");
-        Color c = ImagePNG.hexToColor(hex);
-        this.add(c);
+        this.add(this.hexToColor(hex));
     }
 
     /**
@@ -280,9 +281,10 @@ public class AVL implements Cloneable {
      * @param hex a String object containing the hexadecimal code of the color
      */
     public void remove(String hex) throws NumberFormatException {
-        if (hex.length() != 6) throw new NumberFormatException("For input string: \"" + hex + "\" not valid, length different from 6");
-        Color c = ImagePNG.hexToColor(hex);
-        if (this.search(c) == null) throw new IllegalArgumentException("Hexadecimal color: " + hex + " not in the avl.");
+        Color c = this.hexToColor(hex);
+        if (this.search(c) == null)
+            throw new IllegalArgumentException("Hexadecimal color: " + hex + " not in the avl.");
+
         this.removeHeightVar(c);
     }
 
@@ -412,9 +414,7 @@ public class AVL implements Cloneable {
      * @return an AVL containg color as root
      */
     public AVL search(String hex) throws NumberFormatException {
-        if (hex.length() != 6) throw new NumberFormatException("For input string: \"" + hex + "\" not valid, length different from 6");
-        Color c = ImagePNG.hexToColor(hex);
-        return this.search(c);
+        return this.search(this.hexToColor(hex));
     }
 
     /**
@@ -459,44 +459,38 @@ public class AVL implements Cloneable {
     /**
      * Create a String representation of tha AVL
      * <p>
-     * Complexity : O(log(n))
+     * Complexity : θ(n), n the number of nodes
      *
      * @return a String value
      */
     public String toString() {
         if (this.root == null) return "";
+
         String res = new String();
-        if (this.L != null) {
-            res += '(' + this.L.toString() + ')';
-        }
+        if (this.L != null) res += '(' + this.L.toString() + ')';
 
         res += ImagePNG.colorToHex(this.root);
 
-        if (this.R != null) {
-            res += '(' + this.R.toString() + ')';
-        }
+        if (this.R != null) res += '(' + this.R.toString() + ')';
         return res;
     }
 
     /**
      * Return the Deep-First Search representation of the AVL
      * <p>
-     * Complexity : θ(1)
+     * Complexity : θ(n), n the number of nodes
      *
      * @return a String value
      */
     public String dfs() {
         if (this.root == null) return "";
+
         String res = new String();
-        if (this.L != null) {
-            res += this.L.dfs();
-        }
+        if (this.L != null) res += this.L.dfs();
 
         res += ' ' + ImagePNG.colorToHex(this.root) + ' ';
 
-        if (this.R != null) {
-            res += this.R.dfs();
-        }
+        if (this.R != null) res += this.R.dfs();
         return res;
     }
 
@@ -514,5 +508,20 @@ public class AVL implements Cloneable {
         nv.L = this.L;
         nv.R = this.R;
         return nv;
+    }
+
+    /**
+     * Checks the hex color from input
+     * <p>
+     * Complexity : θ (1)
+     * @param hex the String input
+     * @return a Color object
+     * @throws NumberFormatException if the string format is not proper
+     */
+    private Color hexToColor(String hex) throws NumberFormatException {
+        if (hex.length() != 6) {
+            throw new NumberFormatException("For input string: \"" + hex + "\" not valid, length different from 6");
+        }
+        return ImagePNG.hexToColor(hex);
     }
 }
