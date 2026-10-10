@@ -4,9 +4,9 @@ import java.awt.Color;
  * Enum to improve building the RQuadtree
  */
 enum Safety {
-    Unknown,
-    Unsafe,
-    Safe
+    Unknown,    // Will need a run through
+    Unsafe,     // Will be directly split in 4 quadrant
+    Safe        // Wil be save with top left color value
 }
 
 public class RQuadtree {
@@ -26,7 +26,7 @@ public class RQuadtree {
      *
      * @param image The ImagePNG to build the RQuadtree from.
      *
-     * @implNote O(n²), because of the buildFromImage call.
+     * @implNote O(n), because of the buildFromImage call, n the number of pixels.
      */
     public RQuadtree(ImagePNG image) {
         this(image, new Point(0, 0), new Point(image.width(), image.height()), Safety.Unknown);
@@ -38,8 +38,9 @@ public class RQuadtree {
      * @param image            The ImagePNG to build the RQuadtree from.
      * @param topLeftPoint     Top-left coordinates (inclusive).
      * @param bottomRightPoint Bottom-right coordinates (exclusive).
+     * @param level            Safety level of this part of image
      *
-     * @implNote O(n²), because of the buildFromImage call.
+     * @implNote O(n), because of the buildFromImage call, n the number of pixels.
      */
     private RQuadtree(ImagePNG image, Point topLeftPoint, Point bottomRightPoint, Safety level) {
         this.bottomRight = bottomRightPoint;
@@ -155,9 +156,9 @@ public class RQuadtree {
 
     /**
      * @param image The ImagePNG to check.
-     * @return true if the quadrant is homogeneous (only contains one color).
+     * @return the coordonates of the first problematic pixel encounter if the quadrant is not homogeneous (only contains one color).
      *
-     * @implNote O(n²), check every pixel with a reference one.
+     * @implNote O(n), check each pixel by comparing it to the first pixel encounter.
      */
     private Point QuadrantHomogeneous(ImagePNG image) {
         // Reference color of the quadrant to check with.
@@ -187,7 +188,7 @@ public class RQuadtree {
      * @param lambda Maximal luminance loss authorized.
      * @throws IllegalArgumentException If lambda is outside the range [0, 255].
      *
-     * @implNote TODO
+     * @implNote O(n), at worst the RQuadtree need a leaf for every pixels and phi equals 255
      */
     public void compressLambda(int lambda) {
         if (lambda < 0 || lambda > 255)
@@ -213,7 +214,7 @@ public class RQuadtree {
      *
      * @param phi The maximum number of leaves (must be a power of 4).
      *
-     * @implNote TODO
+     * @implNote O(n), at worst the RQuadtree need a leaf for every pixels and phi equals 1
      */
     public void compressPhi(int phi) {
         if (phi == 1) {
@@ -232,7 +233,7 @@ public class RQuadtree {
     /**
      * Compress the tree to a root only containing the average color
      *
-     * @implNote TODO
+     * @implNote O(n), at worst there is a leaf for every pixels
      */
     private void compressToRoot() {
         if (this.color != null)
@@ -282,8 +283,7 @@ public class RQuadtree {
             sumRed += child.color.getRed();
         }
 
-        int childCount = this.getChildren().length;
-        return new Color(sumRed / childCount, sumGreen / childCount, sumBlue / childCount);
+        return new Color(sumRed / 4, sumGreen / 4, sumBlue / 4);
     }
 
     /**
@@ -317,7 +317,7 @@ public class RQuadtree {
     /**
      * @return The ImagePNG representation of the RQuadtree.
      *
-     * @implNote TODO
+     * @implNote O(n), n the number of pixels
      */
     public ImagePNG toPNG() {
         ImagePNG pngImage = new ImagePNG(image);
@@ -330,7 +330,7 @@ public class RQuadtree {
      *
      * @param image The ImagePNG to build the RQuadtree on.
      *
-     * @implNote TODO
+     * @implNote O(n), n the number of pixels
      */
     private void buildToPNG(ImagePNG image) {
         if (this.color == null)
@@ -354,7 +354,7 @@ public class RQuadtree {
      *
      * @param builder The StringBuilder to save the path to.
      *
-     * @implNote TODO
+     * @implNote O(n), n the number of pixels, at worst there is a leaf for every pixels
      */
     private void buildPath(StringBuilder builder) {
         if (this.color != null) {
