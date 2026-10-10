@@ -193,21 +193,19 @@ public class RQuadtree {
         if (lambda < 0 || lambda > 255)
             throw new IllegalArgumentException("Lambda value must be between 0 and 255.");
 
+        // Compress each existing child.
+        for (RQuadtree child : this.getChildren())
+            if (child != null)
+                child.compressLambda(lambda);
+
         // An overleaf can be compressed.
         if (this.isOverLeaf()) {
             Color averageColor = this.averageColor();
 
             // The luminance threshold is respected.
-            if (this.luminance(averageColor) <= lambda) {
+            if (this.luminance(averageColor) <= lambda)
                 this.processCompression(averageColor);
-                return;
-            }
         }
-
-        // Compress each existing child.
-        for (RQuadtree child : this.getChildren())
-            if (child != null)
-                child.compressLambda(lambda);
     }
 
     /**
