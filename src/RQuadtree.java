@@ -114,6 +114,9 @@ public class RQuadtree {
             // Here we found a problematic pixel in the NW quadrant (NW is unsafe)
             else if (problematic.y < middle.y && problematic.x < middle.x)
                 this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unsafe, Safety.Unknown, Safety.Unknown, Safety.Unknown);
+            // Here we found a problematic pixel in the NE quadrant (1st pixel) (NE is unkown)
+            else if (problematic.y < middle.y && problematic.x == middle.x)
+                this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unknown, Safety.Unknown, Safety.Unknown, Safety.Unknown);
             // Here we found a problematic pixel in the NE quadrant (NE is unsafe)
             else if (problematic.y < middle.y && problematic.x >= middle.x)
                 this.divide(bRx, bRy, tLx, tLy, middle, Safety.Unknown, Safety.Unsafe, Safety.Unknown, Safety.Unknown);
@@ -121,6 +124,12 @@ public class RQuadtree {
             // Here we already ran through NW, NE and SW quadrants entirely and found a problematic pixel in the SE quadrant (NW, NE and SW are safe and SE is unsafe)
             else if (problematic.y == bRy - 1 && problematic.x >= middle.x)
                 this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Safe, Safety.Unsafe);
+            // Here we already ran through NW, NE and SW quadrants entirely and found a problematic pixel in the SE quadrant (1st pixel) (NW, NE and SW are safe and SE is unsafe)
+            else if (problematic.y == middle.y && problematic.x == middle.x)
+                this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Unknown, Safety.Unknown);
+            // Here we already ran through NW, NE and SW quadrants entirely and found a problematic pixel in the NE quadrant (1st pixel) (NW, NE and SW are safe and SE is unsafe)
+            else if (problematic.y == middle.y && problematic.x == this.topLeft.x)
+                this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Unknown, Safety.Unknown);
             // Here we already ran through NW and NE quadrants entirely and found a problematic pixel in the SW quadrant (NW and NE are safe and SW is unsafe)
             else if (problematic.y >= middle.y && problematic.x < middle.x)
                 this.divide(bRx, bRy, tLx, tLy, middle, Safety.Safe, Safety.Safe, Safety.Unknown, Safety.Unsafe);
